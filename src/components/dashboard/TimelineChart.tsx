@@ -44,18 +44,31 @@ function addMonths(ym: string, n: number): string {
   return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
 }
 
+/** 오늘 날짜 YYYY-MM-DD */
+function getToday(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** 날짜에 N일 더하기 (YYYY-MM-DD) */
+function addDays(date: string, n: number): string {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
 /** 기간별 기본 from-to 계산 (YYYY-MM-DD 형식) */
-function getDefaultRange(period: Period): { from: string; to: string } {
-  const now = getCurrentMonth();
+function getDefaultRange(period: Period, lastMonth: string): { from: string; to: string } {
+  const today = getToday();
   switch (period) {
     case "daily":
-      return { from: `${now}-01`, to: `${now}-28` };
+      return { from: today, to: addDays(today, 6) }; // 1주일
     case "weekly":
-      return { from: `${now}-01`, to: `${addMonths(now, 2)}-28` };
+      return { from: today, to: addDays(today, 29) }; // 약 1개월
     case "monthly":
-      return { from: `${now}-01`, to: `${addMonths(now, 11)}-28` };
+      return { from: `${getCurrentMonth()}-01`, to: `${addMonths(getCurrentMonth(), 11)}-28` }; // 1년
     case "yearly":
-      return { from: `${now}-01`, to: `${addMonths(now, 35)}-28` };
+      return { from: `${getCurrentMonth()}-01`, to: `${lastMonth}-28` }; // 전체
   }
 }
 
@@ -142,23 +155,30 @@ export function TimelineChart() {
   const { timeline } = useBudgetSummary();
   const [period, setPeriod] = useState<Period>("monthly");
 
-  const defaultRange = useMemo(() => getDefaultRange(period), [period]);
+  // 전체 데이터의 마지막 월 (년도별 기본 범위에 사용)
+  const lastMonth = timeline.length > 0 ? timeline[timeline.length - 1].month : getCurrentMonth();
+
+  const defaultRange = useMemo(() => getDefaultRange(period, lastMonth), [period, lastMonth]);
   const [from, setFrom] = useState(defaultRange.from);
   const [to, setTo] = useState(defaultRange.to);
 
   // 기간 변경 시 기본 범위로 리셋
   useEffect(() => {
-    const range = getDefaultRange(period);
+    const range = getDefaultRange(period, lastMonth);
     setFrom(range.from);
     setTo(range.to);
-  }, [period]);
+  }, [period, lastMonth]);
 
   const chartData = useMemo(() => {
-    // 먼저 월별 데이터를 from-to로 필터
+    // 월별 데이터를 from-to로 필터
     const filtered = filterByRange(timeline, from, to);
 
     switch (period) {
-      case "daily": return toDaily(filtered);
+      case "daily": {
+        const daily = toDaily(filtered);
+        // 일별은 from-to 날짜로 한번 더 필터
+        return daily.filter((d) => d.month >= from && d.month <= to);
+      }
       case "weekly": return toWeekly(filtered);
       case "yearly": return toYearly(filtered);
       default: return filtered;
