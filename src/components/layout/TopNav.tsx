@@ -6,6 +6,7 @@
 import { NavLink } from "react-router-dom";
 import { HeartHandshake } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { RoomStatusIndicator } from "@/components/room/RoomStatus";
 
 const MENU = [
   { to: "/", label: "시뮬레이터", end: true },
@@ -48,6 +49,7 @@ export function TopNav() {
           </ul>
         </nav>
 
+        <RoomStatusIndicator />
         <ThemeToggle />
       </div>
     </header>

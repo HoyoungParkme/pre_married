@@ -32,3 +32,17 @@
 | 2026-04-15 | [PM 직접] | LICENSE(MIT) 추가, W-4/W-5/S-8 및 ExportButton aria-label 반영 |
 | 2026-04-15 | [검증] | 최종 `npm test` 63/63 통과, `npm run build` 성공 |
 | 2026-04-15 | [Sprint 6 완료] | 나머지 리뷰 지적은 파킹랏으로 이동 (sprint.md) |
+
+## Sprint 7 — Firebase 실시간 동기화
+
+| 시점 | 행동 | 내용 |
+|:--|:--|:--|
+| 2026-04-15 | [분석 시작] | 유저 요청: "두명에서 쓰는거고 입력하면 변수가 자동으로 바뀌게" |
+| 2026-04-15 | [판단] | Firebase Realtime DB 선택 (무료 Spark, 실시간 동기화) |
+| 2026-04-15 | [결정] | 기존 Zustand 스토어 수정 없이 별도 sync hook으로 구현 |
+| 2026-04-15 | [PM 직접] | firebase SDK 설치, config/refs/sync 유틸 작성 |
+| 2026-04-15 | [PM 직접] | useRoomStore (방 생성/참여/나가기) 작성 |
+| 2026-04-15 | [PM 직접] | useFirebaseSync hook (양방향 동기화) 작성 |
+| 2026-04-15 | [PM 직접] | RoomSetup (방 생성/참여 UI) + RoomStatus (연결 상태) 작성 |
+| 2026-04-15 | [PM 직접] | AppLayout + TopNav 수정 (방 가드 + 상태 표시) |
+| 2026-04-15 | [검증] | `npm run build` 성공, `npm test` 63/63 통과 |
