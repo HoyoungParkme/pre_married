@@ -7,7 +7,7 @@ import { useRef } from "react";
 import { ArrowUpRight, ArrowDownRight, Wallet } from "lucide-react";
 import { TimelineChart } from "@/components/dashboard/TimelineChart";
 import { TransactionList } from "@/components/dashboard/TransactionList";
-import { ExportButton } from "@/components/dashboard/ExportButton";
+import { useWishlistStore } from "@/store/useWishlistStore";
 import { useBudgetSummary } from "@/hooks/useBudgetSummary";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { useChecklistStore } from "@/store/useChecklistStore";
@@ -17,6 +17,7 @@ import { formatNumber } from "@/utils/format";
 export default function HomePage() {
   const snapshotRef = useRef<HTMLDivElement>(null);
   const { initialBalance, finalBalance, showMinimum, minimumRequired } = useBudgetSummary();
+  const wishlistTotal = useWishlistStore((s) => s.items).reduce((sum, i) => sum + i.price, 0);
   const transactions = useTransactionStore((s) => s.items);
   const checklist = useChecklistStore((s) => s.items);
   const recurring = useRecurringStore((s) => s.items);
@@ -52,7 +53,6 @@ export default function HomePage() {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-400 dark:text-gray-500">꿀배야 밥먹자</p>
-        <ExportButton targetRef={snapshotRef} />
       </div>
 
       {/* 메인 잔액 카드 */}
@@ -64,9 +64,13 @@ export default function HomePage() {
           <Wallet className="w-3.5 h-3.5" />
           총 보유 자금
         </div>
-        <div className="text-3xl font-bold tracking-tight mb-5">
+        <div className="text-3xl font-bold tracking-tight mb-1">
           {formatNumber(initialBalance)}<span className="text-base font-normal ml-1">원</span>
         </div>
+        {wishlistTotal > 0 && (
+          <p className="text-xs text-white/50 mb-3">혼수 예정 -{formatNumber(wishlistTotal)}원 (잔액 {formatNumber(initialBalance - wishlistTotal)}원)</p>
+        )}
+        {wishlistTotal === 0 && <div className="mb-4" />}
 
         <div className="flex gap-8 text-sm">
           <div className="flex items-center gap-2">

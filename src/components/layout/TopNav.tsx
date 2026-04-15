@@ -12,7 +12,7 @@ const MENU = [
   { to: "/", label: "대시보드", end: true },
   { to: "/settings", label: "설정" },
   { to: "/checklist", label: "체크리스트" },
-  { to: "/wishlist", label: "위시리스트" },
+  { to: "/wishlist", label: "혼수" },
   { to: "/tips", label: "팁" },
 ];
 
