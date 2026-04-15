@@ -8,7 +8,7 @@
  *
  * 주요 의존성: types/budget
  */
-import type { BudgetInput, Transaction, MonthlyBalance } from "@/types/budget";
+import type { BudgetInput, Transaction, ChecklistItem, MonthlyBalance } from "@/types/budget";
 
 /**
  * 현재 월 문자열 반환 (YYYY-MM)
@@ -61,6 +61,7 @@ function formatMonthLabel(ym: string): string {
 export function buildTimeline(
   input: BudgetInput,
   transactions: Transaction[],
+  checklistItems: ChecklistItem[] = [],
 ): MonthlyBalance[] {
   const startMonth = getCurrentMonth();
   const startBalance = input.savingsAccount + input.extraFunds;
@@ -68,21 +69,33 @@ export function buildTimeline(
     input.monthlySavings -
     (input.monthlyRent + input.monthlyMaint + input.monthlyUtil + input.monthlyFood);
 
-  // 종료월 결정: 마지막 거래월 + 3개월, 최소 12개월
+  // 체크리스트의 income/expense 항목을 거래로 변환 (YYYY-MM-DD → YYYY-MM)
+  const checklistFinancial = checklistItems
+    .filter((c) => c.type !== "memo" && c.amount > 0)
+    .map((c) => ({
+      date: c.date.slice(0, 7), // YYYY-MM-DD → YYYY-MM
+      amount: c.type === "expense" ? -c.amount : c.amount,
+    }));
+
+  // 종료월 결정: 마지막 거래/체크리스트월 + 3개월, 최소 12개월
   let endMonth = addMonths(startMonth, 11);
   for (const t of transactions) {
-    if (t.date > endMonth) {
-      endMonth = t.date;
-    }
+    if (t.date > endMonth) endMonth = t.date;
+  }
+  for (const c of checklistFinancial) {
+    if (c.date > endMonth) endMonth = c.date;
   }
   endMonth = addMonths(endMonth, 3);
 
   const totalMonths = monthDiff(startMonth, endMonth);
 
-  // 거래를 월별로 그룹핑
+  // 거래 + 체크리스트 금융 항목을 월별로 그룹핑
   const txByMonth: Record<string, number> = {};
   for (const t of transactions) {
     txByMonth[t.date] = (txByMonth[t.date] ?? 0) + t.amount;
+  }
+  for (const c of checklistFinancial) {
+    txByMonth[c.date] = (txByMonth[c.date] ?? 0) + c.amount;
   }
 
   const series: MonthlyBalance[] = [];
@@ -119,4 +132,22 @@ export function calcMonthlyNet(input: BudgetInput): number {
     input.monthlySavings -
     (input.monthlyRent + input.monthlyMaint + input.monthlyUtil + input.monthlyFood)
   );
+}
+
+/**
+ * 최소 필요 금액 계산.
+ * 모든 지출(거래 + 체크리스트 expense)의 합계를 반환한다.
+ */
+export function calcMinimumRequired(
+  transactions: Transaction[],
+  checklistItems: ChecklistItem[],
+): number {
+  let total = 0;
+  for (const t of transactions) {
+    if (t.amount < 0) total += Math.abs(t.amount);
+  }
+  for (const c of checklistItems) {
+    if (c.type === "expense" && c.amount > 0) total += c.amount;
+  }
+  return total;
 }

@@ -33,22 +33,22 @@ function daysFromNow(days: number): string {
 
 /** 결혼 준비 체크리스트 초기 시드 (오늘 기준 날짜 자동 계산) */
 export const DEFAULT_CHECKLIST: ChecklistItem[] = [
-  // 지금 당장 (D-180 → 0~14일)
-  { id: "c1", date: daysFromNow(0), text: "예식장 후보 3곳 방문 및 견적 요청", done: false },
-  { id: "c2", date: daysFromNow(7), text: "상견례 일정 잡기", done: false },
-  { id: "c3", date: daysFromNow(14), text: "전세 대출(LH 등) 사전 심사 신청", done: false },
-  // 3개월 뒤 (D-90)
-  { id: "c4", date: daysFromNow(90), text: "스드메 계약 (스튜디오/드레스/메이크업)", done: false },
-  { id: "c5", date: daysFromNow(97), text: "신혼여행 항공·숙소 예약", done: false },
-  { id: "c6", date: daysFromNow(104), text: "혼수 가전·가구 리스트 확정", done: false },
-  // 5개월 뒤 (D-30)
-  { id: "c7", date: daysFromNow(150), text: "청첩장 발송", done: false },
-  { id: "c8", date: daysFromNow(157), text: "예단·예물 결정", done: false },
-  { id: "c9", date: daysFromNow(164), text: "신혼집 입주 청소 예약", done: false },
-  // 6개월 뒤 (D-7)
-  { id: "c10", date: daysFromNow(173), text: "본식 리허설 & 최종 하객 확인", done: false },
-  { id: "c11", date: daysFromNow(176), text: "신혼여행 짐 싸기 & 환전", done: false },
-  { id: "c12", date: daysFromNow(179), text: "혼인신고서 작성 준비", done: false },
+  // 지금 당장
+  { id: "c1", date: daysFromNow(0), text: "예식장 후보 3곳 방문 및 견적 요청", done: false, type: "memo", amount: 0 },
+  { id: "c2", date: daysFromNow(7), text: "상견례 일정 잡기", done: false, type: "memo", amount: 0 },
+  { id: "c3", date: daysFromNow(14), text: "전세 대출(LH 등) 사전 심사 신청", done: false, type: "memo", amount: 0 },
+  // 3개월 뒤
+  { id: "c4", date: daysFromNow(90), text: "스드메 계약", done: false, type: "expense", amount: 3_000_000 },
+  { id: "c5", date: daysFromNow(97), text: "신혼여행 항공·숙소 예약", done: false, type: "expense", amount: 5_500_000 },
+  { id: "c6", date: daysFromNow(104), text: "혼수 가전·가구 리스트 확정", done: false, type: "memo", amount: 0 },
+  // 5개월 뒤
+  { id: "c7", date: daysFromNow(150), text: "청첩장 발송", done: false, type: "expense", amount: 500_000 },
+  { id: "c8", date: daysFromNow(157), text: "예단·예물 결정", done: false, type: "expense", amount: 2_000_000 },
+  { id: "c9", date: daysFromNow(164), text: "신혼집 입주 청소 예약", done: false, type: "expense", amount: 200_000 },
+  // 6개월 뒤
+  { id: "c10", date: daysFromNow(173), text: "본식 리허설 & 최종 하객 확인", done: false, type: "memo", amount: 0 },
+  { id: "c11", date: daysFromNow(176), text: "신혼여행 짐 싸기 & 환전", done: false, type: "memo", amount: 0 },
+  { id: "c12", date: daysFromNow(179), text: "혼인신고서 작성 준비", done: false, type: "memo", amount: 0 },
 ];
 
 /** 절약 팁 정적 콘텐츠 */

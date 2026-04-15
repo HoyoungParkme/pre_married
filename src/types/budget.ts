@@ -49,6 +49,10 @@ export interface ChecklistItem {
   date: string;
   text: string;
   done: boolean;
+  /** 분류: 메모(기본) / 입금 / 지출 */
+  type: "memo" | "income" | "expense";
+  /** 금액 (memo는 0, income/expense는 양수) */
+  amount: number;
 }
 
 /** 위시리스트 항목 */

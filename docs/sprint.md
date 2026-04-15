@@ -1,15 +1,15 @@
 # 스프린트 상태
 
-## 현재: Sprint 11 — 체크리스트 달력 전환 + 상단바 스크롤 제거
+## 현재: Sprint 12 — 체크리스트 금융 연동 + 최소 금액
 
 ### 목표
-체크리스트를 달력 UI로 전환, 상단바 모바일 스크롤 제거
+체크리스트 항목에 메모/입금/지출 분류 추가, 대시보드 자금 계산 연동
 
 ### 완료 기준
-- [ ] ChecklistItem.stage → date로 변경
-- [ ] 달력 그리드 UI + 날짜 클릭 시 항목 표시/추가
-- [ ] 진행률 바 제거
-- [ ] TopNav 가로 스크롤 제거
+- [ ] ChecklistItem에 type(memo/income/expense) + amount 추가
+- [ ] 체크리스트 UI에서 분류 선택 + 금액 입력
+- [ ] 대시보드 잔액 계산에 체크리스트 금융 항목 자동 반영
+- [ ] 자금 0원 시 "최소 필요 금액" 표시
 
 ### 단계
 - [x] 분석
@@ -18,10 +18,11 @@
 - [ ] 검증
 
 ### 작업
-1. [ ] ChecklistItem 타입 변경 (stage→date)
-2. [ ] 기본 체크리스트 날짜 기반으로 변환
-3. [ ] ChecklistPage 달력 UI 재작성
-4. [ ] TopNav 스크롤 제거
+1. [ ] ChecklistItem 타입 확장 (type, amount)
+2. [ ] 스토어 + 기본 데이터 수정
+3. [ ] ChecklistPage UI 업데이트
+4. [ ] calculate.ts + BalanceSummary 연동
+5. [ ] 테스트 수정 (agent 위임)
 
 ## 히스토리
 
