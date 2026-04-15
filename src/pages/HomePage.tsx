@@ -1,26 +1,29 @@
 /**
  * 모듈: HomePage.tsx
  * 경로: src/pages/HomePage.tsx
- * 목적: 시뮬레이터 메인 페이지. 대시보드 + 입력 섹션 + 차트 + 결론.
+ * 목적: 시뮬레이터 메인 페이지. 잔액 요약 + 타임라인 차트 + 자금/고정비 입력 + 거래 목록.
  */
 import { useRef } from "react";
 import { RotateCcw } from "lucide-react";
-import { SummaryCards } from "@/components/dashboard/SummaryCards";
-import { FundFlow } from "@/components/dashboard/FundFlow";
-import { FundChart } from "@/components/dashboard/FundChart";
-import { Conclusion } from "@/components/dashboard/Conclusion";
+import { BalanceSummary } from "@/components/dashboard/BalanceSummary";
+import { TimelineChart } from "@/components/dashboard/TimelineChart";
+import { TransactionList } from "@/components/dashboard/TransactionList";
 import { ExportButton } from "@/components/dashboard/ExportButton";
-import { HousingSection } from "@/components/inputs/HousingSection";
-import { SavingsLivingSection } from "@/components/inputs/SavingsLivingSection";
-import { WeddingSection } from "@/components/inputs/WeddingSection";
+import { FundsSection } from "@/components/inputs/FundsSection";
+import { MonthlyExpenseSection } from "@/components/inputs/MonthlyExpenseSection";
 import { useBudgetStore } from "@/store/useBudgetStore";
+import { useTransactionStore } from "@/store/useTransactionStore";
 
 export default function HomePage() {
-  const reset = useBudgetStore((s) => s.reset);
+  const resetBudget = useBudgetStore((s) => s.reset);
+  const resetTransactions = useTransactionStore((s) => s.resetToDefault);
   const snapshotRef = useRef<HTMLDivElement>(null);
 
   const handleReset = () => {
-    if (confirm("입력한 값을 기본값으로 되돌릴까요?")) reset();
+    if (confirm("모든 입력을 기본값으로 되돌릴까요?")) {
+      resetBudget();
+      resetTransactions();
+    }
   };
 
   return (
@@ -31,7 +34,7 @@ export default function HomePage() {
             신혼 준비 마스터 플랜
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">
-            자금 흐름과 일정을 실시간으로 시뮬레이션해 보세요.
+            자금과 지출을 등록하면 잔액 추이를 한눈에 볼 수 있어요.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -48,17 +51,15 @@ export default function HomePage() {
       </header>
 
       <div ref={snapshotRef} className="space-y-8">
-        <SummaryCards />
-        <FundFlow />
-        <FundChart />
+        <BalanceSummary />
+        <TimelineChart />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <HousingSection />
-          <SavingsLivingSection />
-          <WeddingSection />
+          <FundsSection />
+          <MonthlyExpenseSection />
         </div>
 
-        <Conclusion />
+        <TransactionList />
       </div>
     </div>
   );

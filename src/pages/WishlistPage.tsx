@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { Plus, Trash2, RotateCcw } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { useWishlistStore } from "@/store/useWishlistStore";
-import { useBudgetStore } from "@/store/useBudgetStore";
+import { useTransactionStore } from "@/store/useTransactionStore";
 import { formatNumber, parseNumber } from "@/utils/format";
 import type { WishlistItem } from "@/types/budget";
 
@@ -20,7 +20,14 @@ export default function WishlistPage() {
   const remove = useWishlistStore((s) => s.remove);
   const togglePurchased = useWishlistStore((s) => s.togglePurchased);
   const resetToDefault = useWishlistStore((s) => s.resetToDefault);
-  const weddingItemsBudget = useBudgetStore((s) => s.input.weddingItems);
+
+  // 거래 목록에서 "혼수" 카테고리 합계를 예산으로 사용
+  const transactions = useTransactionStore((s) => s.items);
+  const weddingItemsBudget = Math.abs(
+    transactions
+      .filter((t) => t.category === "혼수")
+      .reduce((sum, t) => sum + t.amount, 0),
+  );
 
   // 항목 추가 폼
   const [showAddForm, setShowAddForm] = useState(false);

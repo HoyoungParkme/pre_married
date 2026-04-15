@@ -17,12 +17,14 @@ import {
   checklistRef,
   wishlistRef,
   presetsRef,
+  transactionsRef,
   connectedRef,
 } from "@/firebase/refs";
 import { useBudgetStore } from "@/store/useBudgetStore";
 import { useChecklistStore } from "@/store/useChecklistStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { usePresetStore } from "@/store/usePresetStore";
+import { useTransactionStore } from "@/store/useTransactionStore";
 import { useRoomStore, SHARED_ROOM_ID } from "@/store/useRoomStore";
 import { arrayToMap, mapToArray } from "@/firebase/sync";
 import { isFirebaseConfigured } from "@/firebase/config";
@@ -31,6 +33,7 @@ import type {
   ChecklistItem,
   WishlistItem,
   Preset,
+  Transaction,
 } from "@/types/budget";
 
 /**
@@ -113,6 +116,20 @@ export function useFirebaseSync(): void {
     });
     unsubscribers.push(() => off(pRef));
 
+    // 5. Transactions
+    const tRef = transactionsRef(roomId);
+    onValue(tRef, (snap) => {
+      const remote = mapToArray<Omit<Transaction, "id">>(snap.val());
+      const local = useTransactionStore.getState().items;
+
+      if (JSON.stringify(remote) === JSON.stringify(local)) return;
+
+      isRemoteUpdate.current = true;
+      useTransactionStore.setState({ items: remote as Transaction[] });
+      isRemoteUpdate.current = false;
+    });
+    unsubscribers.push(() => off(tRef));
+
     // --- Zustand → Firebase 구독 ---
 
     const unsubBudget = useBudgetStore.subscribe((state) => {
@@ -148,6 +165,12 @@ export function useFirebaseSync(): void {
       ).catch(console.error);
     });
     unsubscribers.push(unsubPresets);
+
+    const unsubTransactions = useTransactionStore.subscribe((state) => {
+      if (isRemoteUpdate.current) return;
+      fbSet(transactionsRef(roomId), arrayToMap(state.items)).catch(console.error);
+    });
+    unsubscribers.push(unsubTransactions);
 
     return () => {
       unsubscribers.forEach((fn) => fn());

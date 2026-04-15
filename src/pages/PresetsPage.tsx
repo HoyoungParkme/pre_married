@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useBudgetStore } from "@/store/useBudgetStore";
 import { usePresetStore } from "@/store/usePresetStore";
-import { computeSummary } from "@/utils/calculate";
+import { calcMonthlyNet } from "@/utils/calculate";
 import { formatNumber } from "@/utils/format";
 
 export default function PresetsPage() {
@@ -37,7 +37,7 @@ export default function PresetsPage() {
           시나리오 비교
         </h1>
         <p className="text-slate-500 dark:text-slate-400 mt-2">
-          현재 입력값을 이름 붙여 저장하고, 여러 시나리오의 최종 잔액을 한 번에 비교하세요.
+          현재 입력값을 이름 붙여 저장하고, 여러 시나리오를 비교하세요.
         </p>
       </header>
 
@@ -77,15 +77,15 @@ export default function PresetsPage() {
               <tr className="text-left text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
                 <th className="py-3 pr-4 font-semibold">이름</th>
                 <th className="py-3 pr-4 font-semibold">초기 자금</th>
-                <th className="py-3 pr-4 font-semibold">본인 부담</th>
-                <th className="py-3 pr-4 font-semibold">저축 합계</th>
-                <th className="py-3 pr-4 font-semibold">최종 잔액</th>
+                <th className="py-3 pr-4 font-semibold">월 저축</th>
+                <th className="py-3 pr-4 font-semibold">월 순수입</th>
                 <th className="py-3 pr-4 font-semibold text-right">동작</th>
               </tr>
             </thead>
             <tbody>
               {presets.map((p) => {
-                const s = computeSummary(p.input);
+                const total = p.input.savingsAccount + p.input.extraFunds;
+                const net = calcMonthlyNet(p.input);
                 return (
                   <tr
                     key={p.id}
@@ -95,22 +95,20 @@ export default function PresetsPage() {
                       {p.name}
                     </td>
                     <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
-                      {formatNumber(s.totalFunds)}원
-                    </td>
-                    <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
-                      {formatNumber(s.selfPayAmount)}원
+                      {formatNumber(total)}원
                     </td>
                     <td className="py-3 pr-4 text-emerald-600 dark:text-emerald-400 font-semibold">
-                      +{formatNumber(s.totalSavings)}원
+                      +{formatNumber(p.input.monthlySavings)}원
                     </td>
                     <td
                       className={`py-3 pr-4 font-bold ${
-                        s.finalRemain >= 0
+                        net >= 0
                           ? "text-brand-600 dark:text-brand-400"
                           : "text-rose-500"
                       }`}
                     >
-                      {formatNumber(s.finalRemain)}원
+                      {net >= 0 ? "+" : ""}
+                      {formatNumber(net)}원
                     </td>
                     <td className="py-3 pr-2 text-right">
                       <div className="inline-flex items-center gap-1">

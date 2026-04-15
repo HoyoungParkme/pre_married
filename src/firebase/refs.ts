@@ -24,6 +24,10 @@ export const wishlistRef = (roomId: string) =>
 export const presetsRef = (roomId: string) =>
   ref(db, `rooms/${roomId}/presets`);
 
+/** 거래 데이터 경로 */
+export const transactionsRef = (roomId: string) =>
+  ref(db, `rooms/${roomId}/transactions`);
+
 /** 방 메타데이터 경로 */
 export const metaRef = (roomId: string) => ref(db, `rooms/${roomId}/meta`);
 

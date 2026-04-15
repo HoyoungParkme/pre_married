@@ -1,74 +1,122 @@
 /**
  * 모듈: calculate.ts
  * 경로: src/utils/calculate.ts
- * 목적: 예산 입력으로부터 요약 지표(자금 흐름 4단계)를 계산한다.
+ * 목적: 타임라인 기반 월별 잔액을 계산한다.
+ *
+ * 주요 기능:
+ *  - buildTimeline: 자금/고정비/거래 목록으로 월별 잔액 시계열 생성
+ *
+ * 주요 의존성: types/budget
  */
-import type { BudgetInput, BudgetSummary } from "@/types/budget";
+import type { BudgetInput, Transaction, MonthlyBalance } from "@/types/budget";
 
 /**
- * 예산 입력으로부터 요약값을 계산한다.
- *
- * 자금 흐름:
- *   Step 1: totalFunds = baseFunds + extraFunds
- *   Step 2: initialRemain = totalFunds - selfPayAmount(= jeonseTotal - lhSupportAmount)
- *           midRemain = initialRemain - weddingItems - honeymoon
- *   Step 3: totalSavings = monthlySavings * savingMonths
- *   Final: finalRemain = midRemain - weddingCost + totalSavings
+ * 현재 월 문자열 반환 (YYYY-MM)
  */
-export function computeSummary(input: BudgetInput): BudgetSummary {
-  const totalFunds = input.baseFunds + input.extraFunds;
-  const selfPayAmount = input.jeonseTotal - input.lhSupportAmount;
-  const initialRemain = totalFunds - selfPayAmount;
-  const totalLivingCost =
-    input.livingRent + input.livingMaint + input.livingUtil + input.livingFood;
-  const totalSavings = input.monthlySavings * input.savingMonths;
-  const midRemain = initialRemain - input.weddingItems - input.honeymoon;
-  const finalRemain = midRemain - input.weddingCost + totalSavings;
-
-  return {
-    totalFunds,
-    selfPayAmount,
-    initialRemain,
-    totalLivingCost,
-    totalSavings,
-    midRemain,
-    finalRemain,
-  };
+function getCurrentMonth(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
 }
 
 /**
- * 월별 누적 잔액 시계열을 생성한다 (Recharts용).
- *
- * 흐름:
- *   - 0개월차: 초기 잔액(midRemain, 이미 주거/혼수/신행 차감)
- *   - 1~savingMonths개월차: 월 저축 누적 증가
- *   - 마지막 달에 결혼식 비용 차감 → finalRemain
+ * YYYY-MM 형식의 월을 N개월 뒤로 이동
  */
-export function buildMonthlyBalanceSeries(
+function addMonths(ym: string, n: number): string {
+  const [y, m] = ym.split("-").map(Number);
+  const total = y * 12 + (m - 1) + n;
+  const newY = Math.floor(total / 12);
+  const newM = (total % 12) + 1;
+  return `${newY}-${String(newM).padStart(2, "0")}`;
+}
+
+/**
+ * 두 YYYY-MM 사이의 월 수 (end - start)
+ */
+function monthDiff(start: string, end: string): number {
+  const [sy, sm] = start.split("-").map(Number);
+  const [ey, em] = end.split("-").map(Number);
+  return (ey - sy) * 12 + (em - sm);
+}
+
+/**
+ * YYYY-MM 형식의 월을 한국어 라벨로 변환
+ */
+function formatMonthLabel(ym: string): string {
+  const [y, m] = ym.split("-");
+  return `${y}.${m}`;
+}
+
+/**
+ * 타임라인 기반 월별 잔액 시계열을 생성한다.
+ *
+ * Args:
+ *   input: 자금 + 월 고정비
+ *   transactions: 일회성 거래 목록
+ *
+ * Returns:
+ *   월별 잔액 배열 (시작월 ~ 마지막 거래월 + 3개월, 최소 12개월)
+ */
+export function buildTimeline(
   input: BudgetInput,
-): Array<{ month: number; balance: number; label: string }> {
-  const summary = computeSummary(input);
-  const series: Array<{ month: number; balance: number; label: string }> = [];
+  transactions: Transaction[],
+): MonthlyBalance[] {
+  const startMonth = getCurrentMonth();
+  const startBalance = input.savingsAccount + input.extraFunds;
+  const monthlyNet =
+    input.monthlySavings -
+    (input.monthlyRent + input.monthlyMaint + input.monthlyUtil + input.monthlyFood);
 
-  series.push({
-    month: 0,
-    balance: summary.midRemain,
-    label: "혼수·신행 후",
-  });
+  // 종료월 결정: 마지막 거래월 + 3개월, 최소 12개월
+  let endMonth = addMonths(startMonth, 11);
+  for (const t of transactions) {
+    if (t.date > endMonth) {
+      endMonth = t.date;
+    }
+  }
+  endMonth = addMonths(endMonth, 3);
 
-  for (let m = 1; m <= input.savingMonths; m += 1) {
+  const totalMonths = monthDiff(startMonth, endMonth);
+
+  // 거래를 월별로 그룹핑
+  const txByMonth: Record<string, number> = {};
+  for (const t of transactions) {
+    txByMonth[t.date] = (txByMonth[t.date] ?? 0) + t.amount;
+  }
+
+  const series: MonthlyBalance[] = [];
+  let balance = startBalance;
+
+  for (let i = 0; i <= totalMonths; i++) {
+    const month = addMonths(startMonth, i);
+
+    // 첫 달은 초기 잔액만, 이후부터 월 순수입 적용
+    if (i > 0) {
+      balance += monthlyNet;
+    }
+
+    // 해당 월 일회성 거래 적용
+    if (txByMonth[month]) {
+      balance += txByMonth[month];
+    }
+
     series.push({
-      month: m,
-      balance: summary.midRemain + input.monthlySavings * m,
-      label: `${m}개월차`,
+      month,
+      balance,
+      label: formatMonthLabel(month),
     });
   }
 
-  series.push({
-    month: input.savingMonths + 1,
-    balance: summary.finalRemain,
-    label: "결혼식 후",
-  });
-
   return series;
+}
+
+/**
+ * 월 순수입 계산 (저축 - 고정비)
+ */
+export function calcMonthlyNet(input: BudgetInput): number {
+  return (
+    input.monthlySavings -
+    (input.monthlyRent + input.monthlyMaint + input.monthlyUtil + input.monthlyFood)
+  );
 }

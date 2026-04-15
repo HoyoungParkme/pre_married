@@ -4,45 +4,42 @@
  * 목적: 예산/자금 시뮬레이션 관련 타입 정의.
  */
 
-/** 사용자가 입력하는 예산 변수 전체 */
+/** 사용자가 입력하는 자금 + 월 고정비 */
 export interface BudgetInput {
-  /** 기존 보유 자금 (원) */
-  baseFunds: number;
-  /** 추가 여유 자금 (원) */
+  /** 적금통장 잔액 (원) */
+  savingsAccount: number;
+  /** 추가 자금 (원) */
   extraFunds: number;
-  /** 총 전세금 (원) */
-  jeonseTotal: number;
-  /** LH 지원금 (원) */
-  lhSupportAmount: number;
-  /** 월세 + LH 이자 (원) */
-  livingRent: number;
-  /** 관리비 (원) */
-  livingMaint: number;
-  /** 공과금 (원) */
-  livingUtil: number;
-  /** 식비 (원) */
-  livingFood: number;
-  /** 월 예상 저축액 (원) */
+  /** 월 저축액 (원) */
   monthlySavings: number;
-  /** 저축 기간 (개월) */
-  savingMonths: number;
-  /** 혼수 총 비용 (원) */
-  weddingItems: number;
-  /** 신혼여행 총 비용 (원) */
-  honeymoon: number;
-  /** 결혼식 총 비용 (원) */
-  weddingCost: number;
+  /** 월세 (원) */
+  monthlyRent: number;
+  /** 관리비 (원) */
+  monthlyMaint: number;
+  /** 공과금 (원) */
+  monthlyUtil: number;
+  /** 식비 (원) */
+  monthlyFood: number;
 }
 
-/** 계산에서 파생되는 요약 값 */
-export interface BudgetSummary {
-  totalFunds: number;
-  selfPayAmount: number;
-  initialRemain: number;
-  totalLivingCost: number;
-  totalSavings: number;
-  midRemain: number;
-  finalRemain: number;
+/** 일회성 지출/수입 항목 */
+export interface Transaction {
+  id: string;
+  /** 날짜 (YYYY-MM 형식) */
+  date: string;
+  /** 내용 */
+  label: string;
+  /** 금액 (음수 = 지출, 양수 = 수입) */
+  amount: number;
+  /** 분류 */
+  category: "주거" | "결혼" | "혼수" | "기타";
+}
+
+/** 월별 잔액 시계열 (차트용) */
+export interface MonthlyBalance {
+  month: string;
+  balance: number;
+  label: string;
 }
 
 /** 저장된 시나리오 프리셋 */

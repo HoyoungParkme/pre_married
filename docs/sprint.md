@@ -1,15 +1,15 @@
 # 스프린트 상태
 
-## 현재: Sprint 7 — Firebase 실시간 동기화
+## 현재: Sprint 9 — 시뮬레이터 간소화 + 날짜 기반 대시보드
 
 ### 목표
-두 사용자가 각자 기기에서 접속하여 같은 데이터를 실시간 공유
+시뮬레이터 입력을 간소화하고 날짜 기반 지출/수입 대시보드로 전환
 
 ### 완료 기준
-- [ ] 방 코드(6자리)로 두 사용자가 같은 데이터 공간에 연결
-- [ ] 예산/체크리스트/위시리스트/프리셋 변경이 실시간 동기화
-- [ ] 오프라인에서도 로컬 데이터로 정상 동작
-- [ ] TopNav에 연결 상태 표시
+- [ ] 자금 3개(적금, 추가, 월저축) + 고정비 4개로 입력 간소화
+- [ ] 일회성 지출/수입을 날짜와 함께 등록
+- [ ] 월별 잔액 추이 차트 + 거래 타임라인
+- [ ] Firebase 동기화 유지
 
 ### 단계
 - [x] 분석
@@ -18,12 +18,12 @@
 - [ ] 검증
 
 ### 작업
-1. [x] Firebase SDK 설치 + 초기화
-2. [x] 방(Room) 시스템 (생성/참여/상태 관리)
-3. [x] Zustand ↔ Firebase 동기화 hook
-4. [x] 방 설정 UI (RoomSetup, RoomStatus)
-5. [x] 레이아웃 수정 (AppLayout, TopNav)
-6. [ ] GitHub Actions 환경 변수 추가 (사용자가 Firebase 프로젝트 생성 후)
+1. [ ] 타입 변경 (BudgetInput 축소, Transaction 추가)
+2. [ ] 스토어 변경 (useBudgetStore, useTransactionStore)
+3. [ ] 계산 로직 재작성 (타임라인 기반)
+4. [ ] 대시보드 UI (BalanceSummary, TimelineChart, TransactionList)
+5. [ ] 입력 UI (FundsSection, MonthlyExpenseSection)
+6. [ ] Firebase 동기화 업데이트
 
 ## 히스토리
 

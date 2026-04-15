@@ -21,10 +21,10 @@ describe("useBudgetStore 초기값", () => {
 });
 
 describe("setField", () => {
-  it("baseFunds를 변경하면 해당 필드만 업데이트된다", () => {
-    useBudgetStore.getState().setField("baseFunds", 123);
+  it("savingsAccount를 변경하면 해당 필드만 업데이트된다", () => {
+    useBudgetStore.getState().setField("savingsAccount", 123);
     const { input } = useBudgetStore.getState();
-    expect(input.baseFunds).toBe(123);
+    expect(input.savingsAccount).toBe(123);
     // 다른 필드는 그대로다
     expect(input.extraFunds).toBe(DEFAULT_BUDGET.extraFunds);
   });
@@ -33,23 +33,30 @@ describe("setField", () => {
     useBudgetStore.getState().setField("monthlySavings", 2_000_000);
     const { input } = useBudgetStore.getState();
     expect(input.monthlySavings).toBe(2_000_000);
-    expect(input.baseFunds).toBe(DEFAULT_BUDGET.baseFunds);
+    expect(input.savingsAccount).toBe(DEFAULT_BUDGET.savingsAccount);
+  });
+
+  it("monthlyRent를 변경하면 해당 필드만 업데이트된다", () => {
+    useBudgetStore.getState().setField("monthlyRent", 800_000);
+    const { input } = useBudgetStore.getState();
+    expect(input.monthlyRent).toBe(800_000);
+    expect(input.savingsAccount).toBe(DEFAULT_BUDGET.savingsAccount);
   });
 });
 
 describe("replaceAll", () => {
   it("새로운 BudgetInput 전체를 교체한다", () => {
-    const next = { ...DEFAULT_BUDGET, baseFunds: 9_999_999, savingMonths: 24 };
+    const next = { ...DEFAULT_BUDGET, savingsAccount: 9_999_999, monthlySavings: 2_000_000 };
     useBudgetStore.getState().replaceAll(next);
     const { input } = useBudgetStore.getState();
-    expect(input.baseFunds).toBe(9_999_999);
-    expect(input.savingMonths).toBe(24);
+    expect(input.savingsAccount).toBe(9_999_999);
+    expect(input.monthlySavings).toBe(2_000_000);
   });
 });
 
 describe("reset", () => {
   it("필드를 변경한 뒤 reset하면 DEFAULT_BUDGET으로 복원된다", () => {
-    useBudgetStore.getState().setField("baseFunds", 1);
+    useBudgetStore.getState().setField("savingsAccount", 1);
     useBudgetStore.getState().reset();
     const { input } = useBudgetStore.getState();
     expect(input).toEqual(DEFAULT_BUDGET);
