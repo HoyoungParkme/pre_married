@@ -44,18 +44,18 @@ function addMonths(ym: string, n: number): string {
   return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
 }
 
-/** 기간별 기본 from-to 계산 */
+/** 기간별 기본 from-to 계산 (YYYY-MM-DD 형식) */
 function getDefaultRange(period: Period): { from: string; to: string } {
   const now = getCurrentMonth();
   switch (period) {
     case "daily":
-      return { from: now, to: now }; // 1개월 (일별로 보면 ~30일)
+      return { from: `${now}-01`, to: `${now}-28` };
     case "weekly":
-      return { from: now, to: addMonths(now, 2) }; // 3개월
+      return { from: `${now}-01`, to: `${addMonths(now, 2)}-28` };
     case "monthly":
-      return { from: now, to: addMonths(now, 11) }; // 1년
+      return { from: `${now}-01`, to: `${addMonths(now, 11)}-28` };
     case "yearly":
-      return { from: now, to: addMonths(now, 35) }; // 3년
+      return { from: `${now}-01`, to: `${addMonths(now, 35)}-28` };
   }
 }
 
@@ -131,9 +131,11 @@ function toYearly(data: MonthlyBalance[]): MonthlyBalance[] {
   }));
 }
 
-/** 월별 데이터를 from-to로 필터 (YYYY-MM 기준) */
+/** 월별 데이터를 from-to로 필터 (from/to는 YYYY-MM-DD, data.month는 YYYY-MM) */
 function filterByRange(data: MonthlyBalance[], from: string, to: string): MonthlyBalance[] {
-  return data.filter((d) => d.month >= from && d.month <= to);
+  const fromMonth = from.slice(0, 7);
+  const toMonth = to.slice(0, 7);
+  return data.filter((d) => d.month >= fromMonth && d.month <= toMonth);
 }
 
 export function TimelineChart() {
@@ -201,14 +203,14 @@ export function TimelineChart() {
       {/* 날짜 범위 필터 */}
       <div className="flex items-center gap-2 mb-4 text-sm">
         <input
-          type="month"
+          type="date"
           value={from}
           onChange={(e) => setFrom(e.target.value)}
           className="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs outline-none focus:border-brand-500"
         />
         <span className="text-slate-400">~</span>
         <input
-          type="month"
+          type="date"
           value={to}
           onChange={(e) => setTo(e.target.value)}
           className="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs outline-none focus:border-brand-500"
