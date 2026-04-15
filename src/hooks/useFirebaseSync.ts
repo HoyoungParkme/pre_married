@@ -2,24 +2,19 @@
  * 모듈: useFirebaseSync.ts
  * 경로: src/hooks/useFirebaseSync.ts
  * 목적: Zustand 스토어 ↔ Firebase Realtime Database 양방향 동기화.
- *
- * 주요 기능:
- *  - Firebase → Zustand: onValue 리스너로 원격 변경 감지 → 로컬 스토어 업데이트
- *  - Zustand → Firebase: subscribe로 로컬 변경 감지 → Firebase 쓰기
- *  - isRemoteUpdate 플래그로 무한 루프 방지
- *
- * 주요 의존성: firebase/database, zustand stores
  */
 import { useEffect, useRef } from "react";
 import { onValue, set as fbSet, off } from "firebase/database";
 import {
   budgetRef,
+  recurringRef,
   checklistRef,
   wishlistRef,
   transactionsRef,
   connectedRef,
 } from "@/firebase/refs";
 import { useBudgetStore } from "@/store/useBudgetStore";
+import { useRecurringStore } from "@/store/useRecurringStore";
 import { useChecklistStore } from "@/store/useChecklistStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { useTransactionStore } from "@/store/useTransactionStore";
@@ -28,15 +23,12 @@ import { arrayToMap, mapToArray } from "@/firebase/sync";
 import { isFirebaseConfigured } from "@/firebase/config";
 import type {
   BudgetInput,
+  RecurringItem,
   ChecklistItem,
   WishlistItem,
   Transaction,
 } from "@/types/budget";
 
-/**
- * AppLayout에서 한 번만 호출하여 Firebase 동기화를 시작한다.
- * Firebase 설정이 없으면 아무 동작도 하지 않는다 (localStorage만 사용).
- */
 export function useFirebaseSync(): void {
   const setStatus = useRoomStore((s) => s.setStatus);
   const isRemoteUpdate = useRef(false);
@@ -45,94 +37,88 @@ export function useFirebaseSync(): void {
     if (!isFirebaseConfigured()) return;
 
     const roomId = SHARED_ROOM_ID;
-    const unsubscribers: (() => void)[] = [];
+    const unsubs: (() => void)[] = [];
 
-    // --- Firebase 연결 상태 감시 ---
+    // 연결 상태
     const connRef = connectedRef();
-    onValue(connRef, (snap) => {
-      setStatus(snap.val() === true ? "connected" : "disconnected");
-    });
-    unsubscribers.push(() => off(connRef));
+    onValue(connRef, (snap) => setStatus(snap.val() === true ? "connected" : "disconnected"));
+    unsubs.push(() => off(connRef));
 
-    // --- Firebase → Zustand 리스너 ---
+    // --- Firebase → Zustand ---
 
-    // 1. Budget
     const bRef = budgetRef(roomId);
     onValue(bRef, (snap) => {
       if (!snap.exists()) return;
       const remote: BudgetInput = snap.val();
-      const local = useBudgetStore.getState().input;
-      if (JSON.stringify(remote) === JSON.stringify(local)) return;
+      if (JSON.stringify(remote) === JSON.stringify(useBudgetStore.getState().input)) return;
       isRemoteUpdate.current = true;
       useBudgetStore.getState().replaceAll(remote);
       isRemoteUpdate.current = false;
     });
-    unsubscribers.push(() => off(bRef));
+    unsubs.push(() => off(bRef));
 
-    // 2. Checklist
+    const rRef = recurringRef(roomId);
+    onValue(rRef, (snap) => {
+      const remote = mapToArray<Omit<RecurringItem, "id">>(snap.val());
+      if (JSON.stringify(remote) === JSON.stringify(useRecurringStore.getState().items)) return;
+      isRemoteUpdate.current = true;
+      useRecurringStore.setState({ items: remote as RecurringItem[] });
+      isRemoteUpdate.current = false;
+    });
+    unsubs.push(() => off(rRef));
+
     const cRef = checklistRef(roomId);
     onValue(cRef, (snap) => {
       const remote = mapToArray<Omit<ChecklistItem, "id">>(snap.val());
-      const local = useChecklistStore.getState().items;
-      if (JSON.stringify(remote) === JSON.stringify(local)) return;
+      if (JSON.stringify(remote) === JSON.stringify(useChecklistStore.getState().items)) return;
       isRemoteUpdate.current = true;
       useChecklistStore.setState({ items: remote as ChecklistItem[] });
       isRemoteUpdate.current = false;
     });
-    unsubscribers.push(() => off(cRef));
+    unsubs.push(() => off(cRef));
 
-    // 3. Wishlist
     const wRef = wishlistRef(roomId);
     onValue(wRef, (snap) => {
       const remote = mapToArray<Omit<WishlistItem, "id">>(snap.val());
-      const local = useWishlistStore.getState().items;
-      if (JSON.stringify(remote) === JSON.stringify(local)) return;
+      if (JSON.stringify(remote) === JSON.stringify(useWishlistStore.getState().items)) return;
       isRemoteUpdate.current = true;
       useWishlistStore.setState({ items: remote as WishlistItem[] });
       isRemoteUpdate.current = false;
     });
-    unsubscribers.push(() => off(wRef));
+    unsubs.push(() => off(wRef));
 
-    // 4. Transactions
     const tRef = transactionsRef(roomId);
     onValue(tRef, (snap) => {
       const remote = mapToArray<Omit<Transaction, "id">>(snap.val());
-      const local = useTransactionStore.getState().items;
-      if (JSON.stringify(remote) === JSON.stringify(local)) return;
+      if (JSON.stringify(remote) === JSON.stringify(useTransactionStore.getState().items)) return;
       isRemoteUpdate.current = true;
       useTransactionStore.setState({ items: remote as Transaction[] });
       isRemoteUpdate.current = false;
     });
-    unsubscribers.push(() => off(tRef));
+    unsubs.push(() => off(tRef));
 
-    // --- Zustand → Firebase 구독 ---
+    // --- Zustand → Firebase ---
 
-    const unsubBudget = useBudgetStore.subscribe((state) => {
-      if (isRemoteUpdate.current) return;
-      fbSet(budgetRef(roomId), state.input).catch(console.error);
-    });
-    unsubscribers.push(unsubBudget);
+    unsubs.push(useBudgetStore.subscribe((s) => {
+      if (!isRemoteUpdate.current) fbSet(budgetRef(roomId), s.input).catch(console.error);
+    }));
 
-    const unsubChecklist = useChecklistStore.subscribe((state) => {
-      if (isRemoteUpdate.current) return;
-      fbSet(checklistRef(roomId), arrayToMap(state.items)).catch(console.error);
-    });
-    unsubscribers.push(unsubChecklist);
+    unsubs.push(useRecurringStore.subscribe((s) => {
+      if (!isRemoteUpdate.current) fbSet(recurringRef(roomId), arrayToMap(s.items)).catch(console.error);
+    }));
 
-    const unsubWishlist = useWishlistStore.subscribe((state) => {
-      if (isRemoteUpdate.current) return;
-      fbSet(wishlistRef(roomId), arrayToMap(state.items)).catch(console.error);
-    });
-    unsubscribers.push(unsubWishlist);
+    unsubs.push(useChecklistStore.subscribe((s) => {
+      if (!isRemoteUpdate.current) fbSet(checklistRef(roomId), arrayToMap(s.items)).catch(console.error);
+    }));
 
-    const unsubTransactions = useTransactionStore.subscribe((state) => {
-      if (isRemoteUpdate.current) return;
-      fbSet(transactionsRef(roomId), arrayToMap(state.items)).catch(console.error);
-    });
-    unsubscribers.push(unsubTransactions);
+    unsubs.push(useWishlistStore.subscribe((s) => {
+      if (!isRemoteUpdate.current) fbSet(wishlistRef(roomId), arrayToMap(s.items)).catch(console.error);
+    }));
 
-    return () => {
-      unsubscribers.forEach((fn) => fn());
-    };
+    unsubs.push(useTransactionStore.subscribe((s) => {
+      if (!isRemoteUpdate.current) fbSet(transactionsRef(roomId), arrayToMap(s.items)).catch(console.error);
+    }));
+
+    return () => unsubs.forEach((fn) => fn());
   }, [setStatus]);
 }

@@ -4,22 +4,25 @@
  * 목적: 예산/자금 시뮬레이션 관련 타입 정의.
  */
 
-/** 사용자가 입력하는 자금 + 월 고정비 */
+/** 사용자가 입력하는 초기 자금 */
 export interface BudgetInput {
   /** 적금통장 잔액 (원) */
   savingsAccount: number;
   /** 추가 자금 (원) */
   extraFunds: number;
-  /** 월 저축액 (원) */
-  monthlySavings: number;
-  /** 월세 (원) */
-  monthlyRent: number;
-  /** 관리비 (원) */
-  monthlyMaint: number;
-  /** 공과금 (원) */
-  monthlyUtil: number;
-  /** 식비 (원) */
-  monthlyFood: number;
+}
+
+/** 매월 반복되는 수입/지출 항목 */
+export interface RecurringItem {
+  id: string;
+  /** 이름 (월세, 관리비, 식비 등) */
+  label: string;
+  /** 금액 (양수) */
+  amount: number;
+  /** 매월 N일 (1~28) */
+  day: number;
+  /** 수입 또는 지출 */
+  type: "income" | "expense";
 }
 
 /** 일회성 지출/수입 항목 */

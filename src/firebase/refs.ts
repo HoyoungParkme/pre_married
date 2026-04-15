@@ -24,6 +24,10 @@ export const wishlistRef = (roomId: string) =>
 export const presetsRef = (roomId: string) =>
   ref(db, `rooms/${roomId}/presets`);
 
+/** 반복 항목 데이터 경로 */
+export const recurringRef = (roomId: string) =>
+  ref(db, `rooms/${roomId}/recurring`);
+
 /** 거래 데이터 경로 */
 export const transactionsRef = (roomId: string) =>
   ref(db, `rooms/${roomId}/transactions`);

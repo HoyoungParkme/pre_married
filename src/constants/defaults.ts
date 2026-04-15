@@ -3,18 +3,22 @@
  * 경로: src/constants/defaults.ts
  * 목적: 예산 초기값, 기본 거래, 체크리스트, 프리셋, 절약 팁 데이터.
  */
-import type { BudgetInput, Transaction, ChecklistItem } from "@/types/budget";
+import type { BudgetInput, RecurringItem, Transaction, ChecklistItem } from "@/types/budget";
 
-/** 자금 + 월 고정비 기본값 */
+/** 초기 자금 기본값 */
 export const DEFAULT_BUDGET: BudgetInput = {
   savingsAccount: 40_000_000,
   extraFunds: 50_000_000,
-  monthlySavings: 1_500_000,
-  monthlyRent: 500_000,
-  monthlyMaint: 65_000,
-  monthlyUtil: 140_000,
-  monthlyFood: 500_000,
 };
+
+/** 매월 반복 항목 기본값 */
+export const DEFAULT_RECURRING: RecurringItem[] = [
+  { id: "r1", label: "월 저축", amount: 1_500_000, day: 25, type: "income" },
+  { id: "r2", label: "월세", amount: 500_000, day: 5, type: "expense" },
+  { id: "r3", label: "관리비", amount: 65_000, day: 25, type: "expense" },
+  { id: "r4", label: "공과금", amount: 140_000, day: 15, type: "expense" },
+  { id: "r5", label: "식비", amount: 500_000, day: 1, type: "expense" },
+];
 
 /** 기본 일회성 거래 항목 */
 export const DEFAULT_TRANSACTIONS: Transaction[] = [

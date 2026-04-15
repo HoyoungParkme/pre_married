@@ -3,46 +3,27 @@
  * 경로: src/utils/calculate.ts
  * 목적: 타임라인 기반 월별 잔액을 계산한다.
  *
- * 주요 기능:
- *  - buildTimeline: 자금/고정비/거래 목록으로 월별 잔액 시계열 생성
- *
  * 주요 의존성: types/budget
  */
-import type { BudgetInput, Transaction, ChecklistItem, MonthlyBalance } from "@/types/budget";
+import type { BudgetInput, RecurringItem, Transaction, ChecklistItem, MonthlyBalance } from "@/types/budget";
 
-/**
- * 현재 월 문자열 반환 (YYYY-MM)
- */
 function getCurrentMonth(): string {
   const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  return `${y}-${m}`;
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-/**
- * YYYY-MM 형식의 월을 N개월 뒤로 이동
- */
 function addMonths(ym: string, n: number): string {
   const [y, m] = ym.split("-").map(Number);
   const total = y * 12 + (m - 1) + n;
-  const newY = Math.floor(total / 12);
-  const newM = (total % 12) + 1;
-  return `${newY}-${String(newM).padStart(2, "0")}`;
+  return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
 }
 
-/**
- * 두 YYYY-MM 사이의 월 수 (end - start)
- */
 function monthDiff(start: string, end: string): number {
   const [sy, sm] = start.split("-").map(Number);
   const [ey, em] = end.split("-").map(Number);
   return (ey - sy) * 12 + (em - sm);
 }
 
-/**
- * YYYY-MM 형식의 월을 한국어 라벨로 변환
- */
 function formatMonthLabel(ym: string): string {
   const [y, m] = ym.split("-");
   return `${y}.${m}`;
@@ -50,31 +31,33 @@ function formatMonthLabel(ym: string): string {
 
 /**
  * 타임라인 기반 월별 잔액 시계열을 생성한다.
- *
- * Args:
- *   input: 자금 + 월 고정비
- *   transactions: 일회성 거래 목록
- *
- * Returns:
- *   월별 잔액 배열 (시작월 ~ 마지막 거래월 + 3개월, 최소 12개월)
  */
 export function buildTimeline(
   input: BudgetInput,
+  recurring: RecurringItem[],
   transactions: Transaction[],
   checklistItems: ChecklistItem[] = [],
 ): MonthlyBalance[] {
   const startMonth = getCurrentMonth();
   const startBalance = input.savingsAccount + input.extraFunds;
 
-  // 체크리스트의 income/expense 항목을 거래로 변환 (YYYY-MM-DD → YYYY-MM)
+  // 반복 항목에서 월 순수입 계산
+  const monthlyIncome = recurring
+    .filter((r) => r.type === "income")
+    .reduce((sum, r) => sum + r.amount, 0);
+  const monthlyExpenseTotal = recurring
+    .filter((r) => r.type === "expense")
+    .reduce((sum, r) => sum + r.amount, 0);
+
+  // 체크리스트 금융 항목
   const checklistFinancial = checklistItems
     .filter((c) => c.type !== "memo" && c.amount > 0)
     .map((c) => ({
-      date: c.date.slice(0, 7), // YYYY-MM-DD → YYYY-MM
+      date: c.date.slice(0, 7),
       amount: c.type === "expense" ? -c.amount : c.amount,
     }));
 
-  // 종료월 결정: 마지막 거래/체크리스트월 + 3개월, 최소 12개월
+  // 종료월 결정
   let endMonth = addMonths(startMonth, 11);
   for (const t of transactions) {
     if (t.date > endMonth) endMonth = t.date;
@@ -86,55 +69,41 @@ export function buildTimeline(
 
   const totalMonths = monthDiff(startMonth, endMonth);
 
-  // 월별 수입/지출 분리 그룹핑
+  // 월별 일회성 수입/지출 그룹핑
   const incomeByMonth: Record<string, number> = {};
   const expenseByMonth: Record<string, number> = {};
 
   for (const t of transactions) {
-    if (t.amount >= 0) {
-      incomeByMonth[t.date] = (incomeByMonth[t.date] ?? 0) + t.amount;
-    } else {
-      expenseByMonth[t.date] = (expenseByMonth[t.date] ?? 0) + Math.abs(t.amount);
-    }
+    if (t.amount >= 0) incomeByMonth[t.date] = (incomeByMonth[t.date] ?? 0) + t.amount;
+    else expenseByMonth[t.date] = (expenseByMonth[t.date] ?? 0) + Math.abs(t.amount);
   }
   for (const c of checklistFinancial) {
-    if (c.amount >= 0) {
-      incomeByMonth[c.date] = (incomeByMonth[c.date] ?? 0) + c.amount;
-    } else {
-      expenseByMonth[c.date] = (expenseByMonth[c.date] ?? 0) + Math.abs(c.amount);
-    }
+    if (c.amount >= 0) incomeByMonth[c.date] = (incomeByMonth[c.date] ?? 0) + c.amount;
+    else expenseByMonth[c.date] = (expenseByMonth[c.date] ?? 0) + Math.abs(c.amount);
   }
-
-  const monthlyExpense = input.monthlyRent + input.monthlyMaint + input.monthlyUtil + input.monthlyFood;
 
   const series: MonthlyBalance[] = [];
   let balance = startBalance;
 
   for (let i = 0; i <= totalMonths; i++) {
     const month = addMonths(startMonth, i);
-
-    // 해당 월 수입/지출 계산
-    let monthIncome = 0;
-    let monthExpense = 0;
+    let mIncome = 0;
+    let mExpense = 0;
 
     if (i > 0) {
-      // 월 고정 수입/지출
-      monthIncome += input.monthlySavings;
-      monthExpense += monthlyExpense;
+      mIncome += monthlyIncome;
+      mExpense += monthlyExpenseTotal;
     }
 
-    // 일회성 수입/지출 추가
-    monthIncome += incomeByMonth[month] ?? 0;
-    monthExpense += expenseByMonth[month] ?? 0;
-
-    // 잔액 갱신
-    balance += monthIncome - monthExpense;
+    mIncome += incomeByMonth[month] ?? 0;
+    mExpense += expenseByMonth[month] ?? 0;
+    balance += mIncome - mExpense;
 
     series.push({
       month,
       balance,
-      income: monthIncome,
-      expense: monthExpense,
+      income: mIncome,
+      expense: mExpense,
       label: formatMonthLabel(month),
     });
   }
@@ -142,20 +111,12 @@ export function buildTimeline(
   return series;
 }
 
-/**
- * 월 순수입 계산 (저축 - 고정비)
- */
-export function calcMonthlyNet(input: BudgetInput): number {
-  return (
-    input.monthlySavings -
-    (input.monthlyRent + input.monthlyMaint + input.monthlyUtil + input.monthlyFood)
-  );
+/** 월 순수입 계산 (반복 수입 - 반복 지출) */
+export function calcMonthlyNet(recurring: RecurringItem[]): number {
+  return recurring.reduce((sum, r) => sum + (r.type === "income" ? r.amount : -r.amount), 0);
 }
 
-/**
- * 최소 필요 금액 계산.
- * 모든 지출(거래 + 체크리스트 expense)의 합계를 반환한다.
- */
+/** 최소 필요 금액 (모든 지출 합산) */
 export function calcMinimumRequired(
   transactions: Transaction[],
   checklistItems: ChecklistItem[],

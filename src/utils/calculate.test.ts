@@ -2,11 +2,12 @@
  * 모듈: calculate.test.ts
  * 경로: src/utils/calculate.test.ts
  * 목적: buildTimeline / calcMonthlyNet 기본 회귀 테스트.
+ *        RecurringItem[] 도입에 따라 시그니처 변경 반영.
  */
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { buildTimeline, calcMonthlyNet } from "./calculate";
-import { DEFAULT_BUDGET } from "@/constants/defaults";
-import type { Transaction } from "@/types/budget";
+import { DEFAULT_BUDGET, DEFAULT_RECURRING } from "@/constants/defaults";
+import type { RecurringItem, Transaction } from "@/types/budget";
 
 // buildTimeline은 getCurrentMonth()로 현재 월을 기준으로 동작하므로
 // 날짜를 고정하여 결정론적 테스트를 만든다
@@ -33,48 +34,80 @@ function makeTx(overrides: Partial<Transaction> = {}): Transaction {
   };
 }
 
+// 테스트용 RecurringItem 헬퍼
+function makeRecurring(overrides: Partial<RecurringItem> = {}): RecurringItem {
+  return {
+    id: "r-test",
+    label: "테스트 항목",
+    amount: 100_000,
+    day: 1,
+    type: "expense",
+    ...overrides,
+  };
+}
+
 describe("calcMonthlyNet", () => {
-  it("저축액에서 고정비 합계를 뺀 값을 반환한다", () => {
+  it("DEFAULT_RECURRING으로 순수입을 반환한다", () => {
     // Arrange
-    const input = DEFAULT_BUDGET;
-    // monthlySavings=1,500,000 / rent=500,000 maint=65,000 util=140,000 food=500,000
+    // income: 1,500,000 / expense: 500,000 + 65,000 + 140,000 + 500,000 = 1,205,000
     // Net = 1,500,000 - 1,205,000 = 295,000
 
     // Act
-    const net = calcMonthlyNet(input);
+    const net = calcMonthlyNet(DEFAULT_RECURRING);
 
     // Assert
     expect(net).toBe(295_000);
   });
 
-  it("고정비가 저축액보다 크면 음수가 된다", () => {
-    // Arrange
-    const input = { ...DEFAULT_BUDGET, monthlySavings: 500_000 };
-    // Net = 500,000 - 1,205,000 = -705,000
+  it("지출 합계가 수입보다 크면 음수가 된다", () => {
+    // Arrange: 수입 500,000 / 지출 1,205,000 → net = -705,000
+    const recurring: RecurringItem[] = [
+      makeRecurring({ id: "r-inc", label: "저축", amount: 500_000, type: "income" }),
+      ...DEFAULT_RECURRING.filter((r) => r.type === "expense"),
+    ];
 
     // Act
-    const net = calcMonthlyNet(input);
+    const net = calcMonthlyNet(recurring);
 
     // Assert
     expect(net).toBeLessThan(0);
     expect(net).toBe(-705_000);
   });
 
-  it("고정비가 없으면 저축액 전체가 순수입이 된다", () => {
-    // Arrange
-    const input = {
-      ...DEFAULT_BUDGET,
-      monthlyRent: 0,
-      monthlyMaint: 0,
-      monthlyUtil: 0,
-      monthlyFood: 0,
-    };
-
+  it("반복 항목이 없으면 0을 반환한다", () => {
     // Act
-    const net = calcMonthlyNet(input);
+    const net = calcMonthlyNet([]);
 
     // Assert
-    expect(net).toBe(DEFAULT_BUDGET.monthlySavings);
+    expect(net).toBe(0);
+  });
+
+  it("수입 항목만 있으면 수입 합계가 그대로 반환된다", () => {
+    // Arrange
+    const recurring: RecurringItem[] = [
+      makeRecurring({ id: "r1", amount: 1_000_000, type: "income" }),
+      makeRecurring({ id: "r2", amount: 500_000, type: "income" }),
+    ];
+
+    // Act
+    const net = calcMonthlyNet(recurring);
+
+    // Assert
+    expect(net).toBe(1_500_000);
+  });
+
+  it("지출 항목만 있으면 음수가 된다", () => {
+    // Arrange
+    const recurring: RecurringItem[] = [
+      makeRecurring({ id: "r1", amount: 300_000, type: "expense" }),
+      makeRecurring({ id: "r2", amount: 200_000, type: "expense" }),
+    ];
+
+    // Act
+    const net = calcMonthlyNet(recurring);
+
+    // Assert
+    expect(net).toBe(-500_000);
   });
 });
 
@@ -86,7 +119,7 @@ describe("buildTimeline", () => {
     // 루프 i=0..14 → 15개
 
     // Act
-    const series = buildTimeline(DEFAULT_BUDGET, []);
+    const series = buildTimeline(DEFAULT_BUDGET, DEFAULT_RECURRING, []);
 
     // Assert
     expect(series).toHaveLength(15);
@@ -98,7 +131,7 @@ describe("buildTimeline", () => {
     // 40,000,000 + 50,000,000 = 90,000,000
 
     // Act
-    const series = buildTimeline(DEFAULT_BUDGET, []);
+    const series = buildTimeline(DEFAULT_BUDGET, DEFAULT_RECURRING, []);
 
     // Assert
     expect(series[0].balance).toBe(startBalance);
@@ -107,10 +140,10 @@ describe("buildTimeline", () => {
   it("두 번째 달부터 월 순수입이 누적된다", () => {
     // Arrange
     const startBalance = DEFAULT_BUDGET.savingsAccount + DEFAULT_BUDGET.extraFunds;
-    const monthlyNet = calcMonthlyNet(DEFAULT_BUDGET);
+    const monthlyNet = calcMonthlyNet(DEFAULT_RECURRING);
 
     // Act
-    const series = buildTimeline(DEFAULT_BUDGET, []);
+    const series = buildTimeline(DEFAULT_BUDGET, DEFAULT_RECURRING, []);
 
     // Assert
     expect(series[1].balance).toBe(startBalance + monthlyNet);
@@ -119,7 +152,7 @@ describe("buildTimeline", () => {
 
   it("첫 번째 포인트의 month는 현재 월(2026-04)이다", () => {
     // Act
-    const series = buildTimeline(DEFAULT_BUDGET, []);
+    const series = buildTimeline(DEFAULT_BUDGET, DEFAULT_RECURRING, []);
 
     // Assert
     expect(series[0].month).toBe("2026-04");
@@ -127,7 +160,7 @@ describe("buildTimeline", () => {
 
   it("label은 'YYYY.MM' 형식이다", () => {
     // Act
-    const series = buildTimeline(DEFAULT_BUDGET, []);
+    const series = buildTimeline(DEFAULT_BUDGET, DEFAULT_RECURRING, []);
 
     // Assert
     expect(series[0].label).toBe("2026.04");
@@ -137,11 +170,11 @@ describe("buildTimeline", () => {
     // Arrange: 2026-05에 -1,000,000 지출
     const tx = makeTx({ date: "2026-05", amount: -1_000_000 });
     const startBalance = DEFAULT_BUDGET.savingsAccount + DEFAULT_BUDGET.extraFunds;
-    const monthlyNet = calcMonthlyNet(DEFAULT_BUDGET);
+    const monthlyNet = calcMonthlyNet(DEFAULT_RECURRING);
     // 2026-05 = i=1: balance = startBalance + monthlyNet + (-1,000,000)
 
     // Act
-    const series = buildTimeline(DEFAULT_BUDGET, [tx]);
+    const series = buildTimeline(DEFAULT_BUDGET, DEFAULT_RECURRING, [tx]);
 
     // Assert
     const may = series.find((s) => s.month === "2026-05");
@@ -154,10 +187,10 @@ describe("buildTimeline", () => {
     const tx1 = makeTx({ id: "t1", date: "2026-05", amount: -500_000 });
     const tx2 = makeTx({ id: "t2", date: "2026-05", amount: -300_000 });
     const startBalance = DEFAULT_BUDGET.savingsAccount + DEFAULT_BUDGET.extraFunds;
-    const monthlyNet = calcMonthlyNet(DEFAULT_BUDGET);
+    const monthlyNet = calcMonthlyNet(DEFAULT_RECURRING);
 
     // Act
-    const series = buildTimeline(DEFAULT_BUDGET, [tx1, tx2]);
+    const series = buildTimeline(DEFAULT_BUDGET, DEFAULT_RECURRING, [tx1, tx2]);
 
     // Assert
     const may = series.find((s) => s.month === "2026-05");
@@ -171,21 +204,53 @@ describe("buildTimeline", () => {
     const lateTx = makeTx({ id: "t-late", date: "2028-01", amount: -1_000_000 });
 
     // Act
-    const series = buildTimeline(DEFAULT_BUDGET, [lateTx]);
+    const series = buildTimeline(DEFAULT_BUDGET, DEFAULT_RECURRING, [lateTx]);
 
     // Assert: 2026-04 ~ 2028-04 = 24개월 → 25개 포인트
     expect(series.length).toBeGreaterThan(15);
     expect(series[series.length - 1].month).toBe("2028-04");
   });
 
-  it("거래가 없어도 고정비가 크면 잔액이 음수가 될 수 있다", () => {
-    // Arrange: 저축 없이 고정비만 있는 극단적 케이스
-    const input = { ...DEFAULT_BUDGET, monthlySavings: 0 };
+  it("반복 항목이 없으면 잔액이 변하지 않는다 (거래도 없을 때)", () => {
+    // Arrange: recurring 없음
+    const startBalance = DEFAULT_BUDGET.savingsAccount + DEFAULT_BUDGET.extraFunds;
 
     // Act
-    const series = buildTimeline(input, []);
+    const series = buildTimeline(DEFAULT_BUDGET, [], []);
 
-    // Assert: 두 번째 달부터 잔액이 줄어든다
+    // Assert: 모든 달의 balance가 startBalance와 같다
+    for (const point of series) {
+      expect(point.balance).toBe(startBalance);
+    }
+  });
+
+  it("수입 항목만 있으면 두 번째 달부터 잔액이 증가한다", () => {
+    // Arrange
+    const incomeOnly: RecurringItem[] = [
+      makeRecurring({ id: "r-inc", amount: 2_000_000, type: "income" }),
+    ];
+    const startBalance = DEFAULT_BUDGET.savingsAccount + DEFAULT_BUDGET.extraFunds;
+
+    // Act
+    const series = buildTimeline(DEFAULT_BUDGET, incomeOnly, []);
+
+    // Assert
+    expect(series[1].balance).toBe(startBalance + 2_000_000);
+    expect(series[2].balance).toBe(startBalance + 4_000_000);
+  });
+
+  it("지출 항목만 있으면 두 번째 달부터 잔액이 감소한다", () => {
+    // Arrange
+    const expenseOnly: RecurringItem[] = [
+      makeRecurring({ id: "r-exp", amount: 1_000_000, type: "expense" }),
+    ];
+    const startBalance = DEFAULT_BUDGET.savingsAccount + DEFAULT_BUDGET.extraFunds;
+
+    // Act
+    const series = buildTimeline(DEFAULT_BUDGET, expenseOnly, []);
+
+    // Assert
+    expect(series[1].balance).toBe(startBalance - 1_000_000);
     expect(series[1].balance).toBeLessThan(series[0].balance);
   });
 });
