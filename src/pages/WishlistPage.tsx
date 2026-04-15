@@ -4,7 +4,7 @@
  * 목적: 혼수 관리. 전체/필수/선택 탭 + 카테고리 필터.
  */
 import { useMemo, useState } from "react";
-import { Plus, Trash2, RotateCcw } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { useTransactionStore } from "@/store/useTransactionStore";
@@ -20,7 +20,6 @@ export default function WishlistPage() {
   const update = useWishlistStore((s) => s.update);
   const remove = useWishlistStore((s) => s.remove);
   const togglePurchased = useWishlistStore((s) => s.togglePurchased);
-  const resetToDefault = useWishlistStore((s) => s.resetToDefault);
 
   const transactions = useTransactionStore((s) => s.items);
   const weddingItemsBudget = Math.abs(
@@ -63,10 +62,6 @@ export default function WishlistPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">혼수</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">구매할 품목을 관리하세요.</p>
         </div>
-        <button onClick={() => { if (confirm("기본 품목으로 초기화할까요?")) resetToDefault(); }}
-          className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-          <RotateCcw className="w-3.5 h-3.5" /> 초기화
-        </button>
       </header>
 
       {/* 요약 카드 */}
