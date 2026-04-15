@@ -24,7 +24,7 @@ export function TopNav() {
           <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 text-white flex items-center justify-center">
             <Heart className="w-3.5 h-3.5" />
           </span>
-          <span className="hidden sm:block text-sm tracking-tight">꿀배야 집사자</span>
+          <span className="hidden sm:block text-sm tracking-tight">꿀배야 밥먹자</span>
         </NavLink>
 
         <nav className="flex-1">

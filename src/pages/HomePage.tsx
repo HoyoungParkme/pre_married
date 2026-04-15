@@ -51,7 +51,7 @@ export default function HomePage() {
     <div className="space-y-5" ref={snapshotRef}>
       {/* 헤더 */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-400 dark:text-gray-500">꿀배야 집사자</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500">꿀배야 밥먹자</p>
         <ExportButton targetRef={snapshotRef} />
       </div>
 
