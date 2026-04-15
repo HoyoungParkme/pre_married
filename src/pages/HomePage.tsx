@@ -62,15 +62,11 @@ export default function HomePage() {
 
         <div className="flex items-center gap-1.5 text-white/70 text-xs mb-2">
           <Wallet className="w-3.5 h-3.5" />
-          총 보유 자금
+          총 보유 자금 {wishlistTotal > 0 && <span>(혼수 -{formatNumber(wishlistTotal)}원 포함)</span>}
         </div>
-        <div className="text-3xl font-bold tracking-tight mb-1">
-          {formatNumber(initialBalance)}<span className="text-base font-normal ml-1">원</span>
+        <div className="text-3xl font-bold tracking-tight mb-5">
+          {formatNumber(initialBalance - wishlistTotal)}<span className="text-base font-normal ml-1">원</span>
         </div>
-        {wishlistTotal > 0 && (
-          <p className="text-xs text-white/50 mb-3">혼수 예정 -{formatNumber(wishlistTotal)}원 (잔액 {formatNumber(initialBalance - wishlistTotal)}원)</p>
-        )}
-        {wishlistTotal === 0 && <div className="mb-4" />}
 
         <div className="flex gap-8 text-sm">
           <div className="flex items-center gap-2">
