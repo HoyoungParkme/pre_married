@@ -66,7 +66,11 @@ export interface WishlistItem {
   id: string;
   name: string;
   category: "가전" | "가구" | "주방" | "생활" | "기타";
+  /** 1차 분류: 필수(당장 필요) / 선택(없어도 됨) */
+  priority: "필수" | "선택";
+  /** 2차 분류: 새제품 / 중고 */
+  condition: "새제품" | "중고";
+  /** 구매 여부 */
+  purchased: boolean;
   price: number;
-  status: "예정" | "구매완료";
-  note?: string;
 }

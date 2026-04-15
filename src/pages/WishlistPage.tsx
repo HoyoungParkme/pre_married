@@ -1,71 +1,87 @@
 /**
  * 모듈: WishlistPage.tsx
  * 경로: src/pages/WishlistPage.tsx
- * 목적: 혼수 위시리스트 CRUD. 총합은 혼수 예산과 비교할 수 있도록 표시.
+ * 목적: 혼수 위시리스트. 필수/선택 분류 + 새제품/중고 뱃지 + 구매 토글 + 가격 입력.
  */
 import { useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, RotateCcw } from "lucide-react";
 import { Card } from "@/components/ui/Card";
-import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { useBudgetStore } from "@/store/useBudgetStore";
 import { formatNumber, parseNumber } from "@/utils/format";
 import type { WishlistItem } from "@/types/budget";
 
-const CATEGORIES: WishlistItem["category"][] = [
-  "가전",
-  "가구",
-  "주방",
-  "생활",
-  "기타",
-];
+const CATEGORIES: WishlistItem["category"][] = ["가전", "가구", "주방", "생활", "기타"];
 
 export default function WishlistPage() {
   const items = useWishlistStore((s) => s.items);
   const add = useWishlistStore((s) => s.add);
   const update = useWishlistStore((s) => s.update);
   const remove = useWishlistStore((s) => s.remove);
+  const togglePurchased = useWishlistStore((s) => s.togglePurchased);
+  const resetToDefault = useWishlistStore((s) => s.resetToDefault);
   const weddingItemsBudget = useBudgetStore((s) => s.input.weddingItems);
 
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState<WishlistItem["category"]>("가전");
-  const [price, setPrice] = useState(0);
+  // 항목 추가 폼
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newCategory, setNewCategory] = useState<WishlistItem["category"]>("가전");
+  const [newPriority, setNewPriority] = useState<WishlistItem["priority"]>("필수");
+  const [newCondition, setNewCondition] = useState<WishlistItem["condition"]>("새제품");
+  const [newPrice, setNewPrice] = useState(0);
 
-  const total = useMemo(
-    () => items.reduce((sum, i) => sum + i.price, 0),
-    [items],
-  );
-  const purchased = useMemo(
-    () =>
-      items
-        .filter((i) => i.status === "구매완료")
-        .reduce((sum, i) => sum + i.price, 0),
+  // 그룹 분류
+  const essential = useMemo(() => items.filter((i) => i.priority === "필수"), [items]);
+  const optional = useMemo(() => items.filter((i) => i.priority === "선택"), [items]);
+
+  // 통계
+  const total = useMemo(() => items.reduce((sum, i) => sum + i.price, 0), [items]);
+  const purchasedTotal = useMemo(
+    () => items.filter((i) => i.purchased).reduce((sum, i) => sum + i.price, 0),
     [items],
   );
   const diff = weddingItemsBudget - total;
 
   const handleAdd = () => {
-    const trimmed = name.trim();
-    if (!trimmed || price <= 0) {
-      alert("이름과 가격을 올바르게 입력해 주세요.");
-      return;
-    }
-    add({ name: trimmed, category, price, status: "예정" });
-    setName("");
-    setPrice(0);
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    add({
+      name: trimmed,
+      category: newCategory,
+      priority: newPriority,
+      condition: newCondition,
+      purchased: false,
+      price: newPrice,
+    });
+    setNewName("");
+    setNewPrice(0);
+    setShowAddForm(false);
   };
 
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">
-          혼수 위시리스트
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-2">
-          구매할 혼수 품목을 등록하고 합계를 혼수 예산과 비교해 보세요.
-        </p>
+      {/* 헤더 */}
+      <header className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">
+            혼수 위시리스트
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-2">
+            필수/선택으로 분류하고, 새제품/중고를 선택해 가성비 있게 준비하세요.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            if (confirm("기본 품목으로 초기화할까요?")) resetToDefault();
+          }}
+          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          title="기본값으로 초기화"
+        >
+          <RotateCcw className="w-4 h-4" /> 초기화
+        </button>
       </header>
 
+      {/* 요약 카드 */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-6">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">혼수 예산</div>
@@ -76,8 +92,10 @@ export default function WishlistPage() {
         <Card className="p-6">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">위시리스트 총합</div>
           <div className="text-xl font-bold text-slate-800 dark:text-slate-100">
-            {formatNumber(total)}원{" "}
-            <span className="text-sm text-slate-500">(구매 완료 {formatNumber(purchased)}원)</span>
+            {formatNumber(total)}원
+            <span className="text-sm text-slate-500 ml-2">
+              (구매 {formatNumber(purchasedTotal)}원)
+            </span>
           </div>
         </Card>
         <Card className={`p-6 ${diff >= 0 ? "border-emerald-200" : "border-rose-200"}`}>
@@ -93,111 +111,224 @@ export default function WishlistPage() {
         </Card>
       </div>
 
-      <Card as="section" className="p-6 sm:p-8">
-        <SectionHeader
-          index={<Plus className="w-4 h-4" />}
-          title="항목 추가"
-          description="이름/분류/가격을 입력하세요."
-        />
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_160px_160px_auto] gap-2">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="예: 드럼 세탁기"
-            className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 outline-none focus:border-brand-500"
-          />
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value as WishlistItem["category"])}
-            className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 outline-none focus:border-brand-500"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <input
-            type="text"
-            inputMode="numeric"
-            value={formatNumber(price)}
-            onChange={(e) => setPrice(parseNumber(e.target.value))}
-            className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-right outline-none focus:border-brand-500"
-          />
-          <button
-            type="button"
-            onClick={handleAdd}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-semibold"
-          >
-            <Plus className="w-4 h-4" /> 추가
-          </button>
-        </div>
-      </Card>
+      {/* 필수 품목 */}
+      <ItemGroup
+        title="필수 품목"
+        emoji="📌"
+        items={essential}
+        onToggle={togglePurchased}
+        onUpdate={update}
+        onRemove={remove}
+      />
 
-      <Card as="section" className="p-6 sm:p-8 overflow-x-auto">
-        <SectionHeader title="품목 목록" />
-        {items.length === 0 ? (
-          <p className="text-slate-500 dark:text-slate-400 text-sm">
-            아직 등록된 품목이 없습니다.
-          </p>
+      {/* 선택 품목 */}
+      <ItemGroup
+        title="선택 품목"
+        emoji="💡"
+        items={optional}
+        onToggle={togglePurchased}
+        onUpdate={update}
+        onRemove={remove}
+      />
+
+      {/* 항목 추가 */}
+      <Card as="section" className="p-6">
+        {!showAddForm ? (
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="flex items-center gap-2 text-sm font-semibold text-brand-500 hover:text-brand-600"
+          >
+            <Plus className="w-4 h-4" /> 항목 추가
+          </button>
         ) : (
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="품목 이름"
+                className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 outline-none focus:border-brand-500"
+                autoFocus
+              />
+              <select
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value as WishlistItem["category"])}
+                className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <select
+                value={newPriority}
+                onChange={(e) => setNewPriority(e.target.value as WishlistItem["priority"])}
+                className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              >
+                <option value="필수">필수</option>
+                <option value="선택">선택</option>
+              </select>
+              <select
+                value={newCondition}
+                onChange={(e) => setNewCondition(e.target.value as WishlistItem["condition"])}
+                className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+              >
+                <option value="새제품">새제품</option>
+                <option value="중고">중고</option>
+              </select>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={newPrice ? formatNumber(newPrice) : ""}
+                onChange={(e) => setNewPrice(parseNumber(e.target.value))}
+                placeholder="가격"
+                className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-right outline-none focus:border-brand-500"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleAdd}
+                className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm"
+              >
+                추가
+              </button>
+              <button
+                onClick={() => setShowAddForm(false)}
+                className="px-4 py-2 rounded-xl text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+/** 품목 그룹 (필수/선택) */
+function ItemGroup({
+  title,
+  emoji,
+  items,
+  onToggle,
+  onUpdate,
+  onRemove,
+}: {
+  title: string;
+  emoji: string;
+  items: WishlistItem[];
+  onToggle: (id: string) => void;
+  onUpdate: (id: string, patch: Partial<Omit<WishlistItem, "id">>) => void;
+  onRemove: (id: string) => void;
+}) {
+  const purchasedCount = items.filter((i) => i.purchased).length;
+
+  return (
+    <Card as="section" className="p-6 sm:p-8">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-lg">{emoji}</span>
+        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+          {title}
+        </h2>
+        <span className="text-sm text-slate-500 dark:text-slate-400">
+          ({items.length}개 중 {purchasedCount}개 구매)
+        </span>
+      </div>
+
+      {items.length === 0 ? (
+        <p className="text-slate-500 dark:text-slate-400 text-sm">항목이 없습니다.</p>
+      ) : (
+        <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
-                <th className="py-3 pr-4 font-semibold">이름</th>
-                <th className="py-3 pr-4 font-semibold">분류</th>
-                <th className="py-3 pr-4 font-semibold text-right">가격</th>
-                <th className="py-3 pr-4 font-semibold">상태</th>
-                <th className="py-3 pr-2 text-right font-semibold">동작</th>
+                <th className="py-3 pr-3 font-semibold w-10">구매</th>
+                <th className="py-3 pr-3 font-semibold">이름</th>
+                <th className="py-3 pr-3 font-semibold">분류</th>
+                <th className="py-3 pr-3 font-semibold">상태</th>
+                <th className="py-3 pr-3 font-semibold text-right">가격</th>
+                <th className="py-3 w-10"></th>
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
                 <tr
                   key={item.id}
-                  className="border-b border-slate-100 dark:border-slate-800 last:border-0"
+                  className={`border-b border-slate-100 dark:border-slate-800 last:border-0 ${
+                    item.purchased ? "opacity-60" : ""
+                  }`}
                 >
-                  <td className="py-3 pr-4 font-semibold text-slate-800 dark:text-slate-100">
+                  {/* 구매 토글 */}
+                  <td className="py-3 pr-3">
+                    <input
+                      type="checkbox"
+                      checked={item.purchased}
+                      onChange={() => onToggle(item.id)}
+                      className="w-4 h-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500 cursor-pointer"
+                    />
+                  </td>
+                  {/* 이름 */}
+                  <td
+                    className={`py-3 pr-3 font-semibold ${
+                      item.purchased
+                        ? "line-through text-slate-400 dark:text-slate-500"
+                        : "text-slate-800 dark:text-slate-100"
+                    }`}
+                  >
                     {item.name}
                   </td>
-                  <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
+                  {/* 분류 */}
+                  <td className="py-3 pr-3 text-slate-600 dark:text-slate-300">
                     {item.category}
                   </td>
-                  <td className="py-3 pr-4 text-right text-slate-700 dark:text-slate-200">
-                    {formatNumber(item.price)}원
-                  </td>
-                  <td className="py-3 pr-4">
+                  {/* 새제품/중고 뱃지 */}
+                  <td className="py-3 pr-3">
                     <select
-                      value={item.status}
+                      value={item.condition}
                       onChange={(e) =>
-                        update(item.id, { status: e.target.value as WishlistItem["status"] })
+                        onUpdate(item.id, {
+                          condition: e.target.value as WishlistItem["condition"],
+                        })
                       }
-                      className={`px-2 py-1 rounded-md text-xs font-semibold border ${
-                        item.status === "구매완료"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-900"
-                          : "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                      className={`px-2 py-1 rounded-md text-xs font-semibold border cursor-pointer ${
+                        item.condition === "새제품"
+                          ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-900"
+                          : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-900"
                       }`}
                     >
-                      <option value="예정">예정</option>
-                      <option value="구매완료">구매완료</option>
+                      <option value="새제품">새제품</option>
+                      <option value="중고">중고</option>
                     </select>
                   </td>
-                  <td className="py-3 pr-2 text-right">
+                  {/* 가격 (인라인 편집) */}
+                  <td className="py-3 pr-3 text-right">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={formatNumber(item.price)}
+                      onChange={(e) =>
+                        onUpdate(item.id, { price: parseNumber(e.target.value) })
+                      }
+                      className="w-28 text-right px-2 py-1 rounded-md border border-transparent hover:border-slate-200 dark:hover:border-slate-700 focus:border-brand-500 bg-transparent text-slate-700 dark:text-slate-200 outline-none text-sm font-mono"
+                    />
+                    <span className="text-slate-400 text-xs ml-0.5">원</span>
+                  </td>
+                  {/* 삭제 */}
+                  <td className="py-3 text-right">
                     <button
-                      type="button"
-                      onClick={() => remove(item.id)}
-                      className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/30 text-rose-500"
+                      onClick={() => onRemove(item.id)}
+                      className="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/30 text-rose-400 hover:text-rose-500"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        )}
-      </Card>
-    </div>
+        </div>
+      )}
+    </Card>
   );
 }
