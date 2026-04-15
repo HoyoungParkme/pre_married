@@ -22,7 +22,9 @@ export default function WishlistPage() {
   const togglePurchased = useWishlistStore((s) => s.togglePurchased);
 
   const budgetInput = useBudgetStore((s) => s.input);
-  const weddingItemsBudget = budgetInput.savingsAccount + budgetInput.extraFunds;
+  const totalFunds = budgetInput.savingsAccount + budgetInput.extraFunds;
+  const wishlistTotal = items.reduce((s, i) => s + i.price, 0);
+  const weddingItemsBudget = totalFunds - wishlistTotal;
 
   const [tab, setTab] = useState<PriorityTab>("all");
   const [categoryFilter, setCategoryFilter] = useState<WishlistItem["category"] | "all">("all");
@@ -40,7 +42,6 @@ export default function WishlistPage() {
     return list;
   }, [items, tab, categoryFilter]);
 
-  const total = useMemo(() => items.reduce((s, i) => s + i.price, 0), [items]);
   const purchasedTotal = useMemo(() => items.filter((i) => i.purchased).reduce((s, i) => s + i.price, 0), [items]);
   const purchasedCount = filtered.filter((i) => i.purchased).length;
 
@@ -65,17 +66,17 @@ export default function WishlistPage() {
       {/* 요약 카드 */}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800/50">
-          <p className="text-[11px] text-gray-400 mb-1">혼수 예산</p>
-          <p className="text-base font-bold text-gray-900 dark:text-gray-100 tabular-nums">{formatNumber(weddingItemsBudget)}원</p>
+          <p className="text-[11px] text-gray-400 mb-1">총 보유 자금</p>
+          <p className="text-base font-bold text-gray-900 dark:text-gray-100 tabular-nums">{formatNumber(totalFunds)}원</p>
         </div>
         <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800/50">
-          <p className="text-[11px] text-gray-400 mb-1">총합 (구매 {formatNumber(purchasedTotal)}원)</p>
-          <p className="text-base font-bold text-gray-900 dark:text-gray-100 tabular-nums">{formatNumber(total)}원</p>
+          <p className="text-[11px] text-gray-400 mb-1">혼수 총합 (구매 {formatNumber(purchasedTotal)}원)</p>
+          <p className="text-base font-bold text-rose-500 tabular-nums">-{formatNumber(wishlistTotal)}원</p>
         </div>
-        <div className={`bg-white dark:bg-gray-900 rounded-2xl p-4 border ${weddingItemsBudget - total >= 0 ? "border-emerald-200" : "border-rose-200"}`}>
-          <p className="text-[11px] text-gray-400 mb-1">예산 대비</p>
-          <p className={`text-base font-bold tabular-nums ${weddingItemsBudget - total >= 0 ? "text-emerald-600" : "text-rose-500"}`}>
-            {weddingItemsBudget - total >= 0 ? "+" : ""}{formatNumber(weddingItemsBudget - total)}원
+        <div className={`bg-white dark:bg-gray-900 rounded-2xl p-4 border ${weddingItemsBudget >= 0 ? "border-emerald-200" : "border-rose-200"}`}>
+          <p className="text-[11px] text-gray-400 mb-1">혼수 후 잔액</p>
+          <p className={`text-base font-bold tabular-nums ${weddingItemsBudget >= 0 ? "text-emerald-600" : "text-rose-500"}`}>
+            {formatNumber(weddingItemsBudget)}원
           </p>
         </div>
       </div>
