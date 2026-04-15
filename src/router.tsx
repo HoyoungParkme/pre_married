@@ -9,7 +9,6 @@ import HomePage from "@/pages/HomePage";
 import SettingsPage from "@/pages/SettingsPage";
 import ChecklistPage from "@/pages/ChecklistPage";
 import WishlistPage from "@/pages/WishlistPage";
-import TipsPage from "@/pages/TipsPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 
 export const router = createHashRouter([
@@ -21,7 +20,6 @@ export const router = createHashRouter([
       { path: "settings", element: <SettingsPage /> },
       { path: "checklist", element: <ChecklistPage /> },
       { path: "wishlist", element: <WishlistPage /> },
-      { path: "tips", element: <TipsPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },
