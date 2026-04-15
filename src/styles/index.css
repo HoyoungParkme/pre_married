@@ -17,11 +17,11 @@ body,
 }
 
 body {
-  @apply bg-slate-50 text-slate-800 antialiased;
+  @apply bg-gray-50 text-gray-900 antialiased;
 }
 
 html.dark body {
-  @apply bg-slate-950 text-slate-100;
+  @apply bg-gray-950 text-gray-100;
 }
 
 /* 숫자 입력에서 브라우저 기본 스핀 버튼 제거 */
@@ -32,4 +32,16 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 input[type="number"] {
   -moz-appearance: textfield;
+}
+
+/* 스크롤바 얇게 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-700 rounded-full;
 }

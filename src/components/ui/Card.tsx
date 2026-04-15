@@ -15,7 +15,7 @@ export function Card({ children, className = "", as = "div" }: CardProps) {
   const Tag = as;
   return (
     <Tag
-      className={`bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl shadow-card hover:shadow-card-hover transition-shadow ${className}`}
+      className={`bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800/50 rounded-2xl shadow-card transition-shadow ${className}`}
     >
       {children}
     </Tag>
