@@ -24,7 +24,7 @@ export function TopNav() {
           <span className="w-8 h-8 rounded-xl bg-brand-500 text-white flex items-center justify-center">
             <HeartHandshake className="w-4 h-4" />
           </span>
-          <span className="hidden sm:block tracking-tight">신혼 마스터 플랜</span>
+          <span className="hidden sm:block tracking-tight">꿀배야 집사자</span>
         </NavLink>
 
         <nav className="flex-1">

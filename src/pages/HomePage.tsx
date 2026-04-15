@@ -17,7 +17,7 @@ export default function HomePage() {
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">
-            신혼 준비 마스터 플랜
+            꿀배야 집사자
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">
             자금 흐름을 한눈에 확인하세요.
