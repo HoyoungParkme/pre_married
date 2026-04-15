@@ -65,9 +65,6 @@ export function buildTimeline(
 ): MonthlyBalance[] {
   const startMonth = getCurrentMonth();
   const startBalance = input.savingsAccount + input.extraFunds;
-  const monthlyNet =
-    input.monthlySavings -
-    (input.monthlyRent + input.monthlyMaint + input.monthlyUtil + input.monthlyFood);
 
   // 체크리스트의 income/expense 항목을 거래로 변환 (YYYY-MM-DD → YYYY-MM)
   const checklistFinancial = checklistItems
@@ -89,14 +86,26 @@ export function buildTimeline(
 
   const totalMonths = monthDiff(startMonth, endMonth);
 
-  // 거래 + 체크리스트 금융 항목을 월별로 그룹핑
-  const txByMonth: Record<string, number> = {};
+  // 월별 수입/지출 분리 그룹핑
+  const incomeByMonth: Record<string, number> = {};
+  const expenseByMonth: Record<string, number> = {};
+
   for (const t of transactions) {
-    txByMonth[t.date] = (txByMonth[t.date] ?? 0) + t.amount;
+    if (t.amount >= 0) {
+      incomeByMonth[t.date] = (incomeByMonth[t.date] ?? 0) + t.amount;
+    } else {
+      expenseByMonth[t.date] = (expenseByMonth[t.date] ?? 0) + Math.abs(t.amount);
+    }
   }
   for (const c of checklistFinancial) {
-    txByMonth[c.date] = (txByMonth[c.date] ?? 0) + c.amount;
+    if (c.amount >= 0) {
+      incomeByMonth[c.date] = (incomeByMonth[c.date] ?? 0) + c.amount;
+    } else {
+      expenseByMonth[c.date] = (expenseByMonth[c.date] ?? 0) + Math.abs(c.amount);
+    }
   }
+
+  const monthlyExpense = input.monthlyRent + input.monthlyMaint + input.monthlyUtil + input.monthlyFood;
 
   const series: MonthlyBalance[] = [];
   let balance = startBalance;
@@ -104,19 +113,28 @@ export function buildTimeline(
   for (let i = 0; i <= totalMonths; i++) {
     const month = addMonths(startMonth, i);
 
-    // 첫 달은 초기 잔액만, 이후부터 월 순수입 적용
+    // 해당 월 수입/지출 계산
+    let monthIncome = 0;
+    let monthExpense = 0;
+
     if (i > 0) {
-      balance += monthlyNet;
+      // 월 고정 수입/지출
+      monthIncome += input.monthlySavings;
+      monthExpense += monthlyExpense;
     }
 
-    // 해당 월 일회성 거래 적용
-    if (txByMonth[month]) {
-      balance += txByMonth[month];
-    }
+    // 일회성 수입/지출 추가
+    monthIncome += incomeByMonth[month] ?? 0;
+    monthExpense += expenseByMonth[month] ?? 0;
+
+    // 잔액 갱신
+    balance += monthIncome - monthExpense;
 
     series.push({
       month,
       balance,
+      income: monthIncome,
+      expense: monthExpense,
       label: formatMonthLabel(month),
     });
   }

@@ -38,7 +38,12 @@ export interface Transaction {
 /** 월별 잔액 시계열 (차트용) */
 export interface MonthlyBalance {
   month: string;
+  /** 누적 잔액 (라인 차트) */
   balance: number;
+  /** 해당 월 수입 합계 (막대 차트) */
+  income: number;
+  /** 해당 월 지출 합계 (막대 차트, 양수) */
+  expense: number;
   label: string;
 }
 
