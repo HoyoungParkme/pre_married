@@ -22,10 +22,10 @@ export const DEFAULT_RECURRING: RecurringItem[] = [
 
 /** 기본 일회성 거래 항목 */
 export const DEFAULT_TRANSACTIONS: Transaction[] = [
-  { id: "t1", date: "2026-06", label: "전세 자기부담", amount: -32_250_000, category: "주거" },
-  { id: "t2", date: "2026-08", label: "혼수", amount: -5_000_000, category: "혼수" },
-  { id: "t3", date: "2026-09", label: "신혼여행", amount: -5_500_000, category: "결혼" },
-  { id: "t4", date: "2026-11", label: "결혼식", amount: -15_000_000, category: "결혼" },
+  { id: "t1", date: "2026-06-01", label: "전세 자기부담", amount: -32_250_000, category: "주거" },
+  { id: "t2", date: "2026-08-15", label: "혼수", amount: -5_000_000, category: "혼수" },
+  { id: "t3", date: "2026-09-20", label: "신혼여행", amount: -5_500_000, category: "결혼" },
+  { id: "t4", date: "2026-11-08", label: "결혼식", amount: -15_000_000, category: "결혼" },
 ];
 
 /** 오늘 기준 N일 뒤 날짜 (YYYY-MM-DD) */

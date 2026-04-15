@@ -57,10 +57,11 @@ export function buildTimeline(
       amount: c.type === "expense" ? -c.amount : c.amount,
     }));
 
-  // 종료월 결정
+  // 종료월 결정 (거래 날짜가 YYYY-MM 또는 YYYY-MM-DD일 수 있음)
   let endMonth = addMonths(startMonth, 11);
   for (const t of transactions) {
-    if (t.date > endMonth) endMonth = t.date;
+    const m = t.date.slice(0, 7);
+    if (m > endMonth) endMonth = m;
   }
   for (const c of checklistFinancial) {
     if (c.date > endMonth) endMonth = c.date;
@@ -74,8 +75,9 @@ export function buildTimeline(
   const expenseByMonth: Record<string, number> = {};
 
   for (const t of transactions) {
-    if (t.amount >= 0) incomeByMonth[t.date] = (incomeByMonth[t.date] ?? 0) + t.amount;
-    else expenseByMonth[t.date] = (expenseByMonth[t.date] ?? 0) + Math.abs(t.amount);
+    const m = t.date.slice(0, 7); // YYYY-MM-DD → YYYY-MM
+    if (t.amount >= 0) incomeByMonth[m] = (incomeByMonth[m] ?? 0) + t.amount;
+    else expenseByMonth[m] = (expenseByMonth[m] ?? 0) + Math.abs(t.amount);
   }
   for (const c of checklistFinancial) {
     if (c.amount >= 0) incomeByMonth[c.date] = (incomeByMonth[c.date] ?? 0) + c.amount;

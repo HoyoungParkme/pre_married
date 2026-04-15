@@ -31,7 +31,7 @@ export default function HomePage() {
   let oneTimeIncome = 0;
   let oneTimeExpense = 0;
   for (const t of transactions) {
-    if (t.date === thisMonth) {
+    if (t.date.startsWith(thisMonth)) {
       if (t.amount >= 0) oneTimeIncome += t.amount;
       else oneTimeExpense += Math.abs(t.amount);
     }
@@ -43,7 +43,7 @@ export default function HomePage() {
 
   // 다가오는 큰 지출 (오늘 이후, 최대 4개)
   const upcoming = transactions
-    .filter((t) => t.date >= thisMonth && t.amount < 0)
+    .filter((t) => t.date.slice(0, 7) >= thisMonth && t.amount < 0)
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 4);
 
@@ -56,7 +56,7 @@ export default function HomePage() {
       </div>
 
       {/* 메인 잔액 카드 */}
-      <div className="bg-gradient-to-br from-brand-500 via-brand-600 to-rose-700 rounded-3xl p-6 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-br from-brand-500 via-brand-600 to-indigo-700 rounded-3xl p-6 text-white relative overflow-hidden">
         <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10" />
         <div className="absolute right-10 bottom-2 w-12 h-12 rounded-full bg-white/5" />
 

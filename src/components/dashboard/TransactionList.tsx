@@ -110,7 +110,7 @@ export function TransactionList() {
         <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
             <input
-              type="month"
+              type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 outline-none focus:border-brand-500 text-sm"
