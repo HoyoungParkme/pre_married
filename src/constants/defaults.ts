@@ -3,7 +3,7 @@
  * 경로: src/constants/defaults.ts
  * 목적: 예산 초기값, 기본 거래, 체크리스트, 프리셋, 절약 팁 데이터.
  */
-import type { BudgetInput, Transaction, ChecklistItem, Preset } from "@/types/budget";
+import type { BudgetInput, Transaction, ChecklistItem } from "@/types/budget";
 
 /** 자금 + 월 고정비 기본값 */
 export const DEFAULT_BUDGET: BudgetInput = {
@@ -22,36 +22,6 @@ export const DEFAULT_TRANSACTIONS: Transaction[] = [
   { id: "t2", date: "2026-08", label: "혼수", amount: -5_000_000, category: "혼수" },
   { id: "t3", date: "2026-09", label: "신혼여행", amount: -5_500_000, category: "결혼" },
   { id: "t4", date: "2026-11", label: "결혼식", amount: -15_000_000, category: "결혼" },
-];
-
-/** 비교용 샘플 프리셋 */
-export const SAMPLE_PRESETS: Preset[] = [
-  {
-    id: "preset-standard",
-    name: "기본 시나리오",
-    createdAt: 0,
-    input: DEFAULT_BUDGET,
-  },
-  {
-    id: "preset-tight",
-    name: "알뜰 시나리오",
-    createdAt: 0,
-    input: {
-      ...DEFAULT_BUDGET,
-      monthlySavings: 1_800_000,
-      monthlyFood: 400_000,
-    },
-  },
-  {
-    id: "preset-splurge",
-    name: "여유 시나리오",
-    createdAt: 0,
-    input: {
-      ...DEFAULT_BUDGET,
-      monthlySavings: 1_200_000,
-      monthlyFood: 700_000,
-    },
-  },
 ];
 
 /** 결혼 준비 체크리스트 초기 시드 */

@@ -16,14 +16,12 @@ import {
   budgetRef,
   checklistRef,
   wishlistRef,
-  presetsRef,
   transactionsRef,
   connectedRef,
 } from "@/firebase/refs";
 import { useBudgetStore } from "@/store/useBudgetStore";
 import { useChecklistStore } from "@/store/useChecklistStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
-import { usePresetStore } from "@/store/usePresetStore";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { useRoomStore, SHARED_ROOM_ID } from "@/store/useRoomStore";
 import { arrayToMap, mapToArray } from "@/firebase/sync";
@@ -32,7 +30,6 @@ import type {
   BudgetInput,
   ChecklistItem,
   WishlistItem,
-  Preset,
   Transaction,
 } from "@/types/budget";
 
@@ -65,9 +62,7 @@ export function useFirebaseSync(): void {
       if (!snap.exists()) return;
       const remote: BudgetInput = snap.val();
       const local = useBudgetStore.getState().input;
-
       if (JSON.stringify(remote) === JSON.stringify(local)) return;
-
       isRemoteUpdate.current = true;
       useBudgetStore.getState().replaceAll(remote);
       isRemoteUpdate.current = false;
@@ -79,9 +74,7 @@ export function useFirebaseSync(): void {
     onValue(cRef, (snap) => {
       const remote = mapToArray<Omit<ChecklistItem, "id">>(snap.val());
       const local = useChecklistStore.getState().items;
-
       if (JSON.stringify(remote) === JSON.stringify(local)) return;
-
       isRemoteUpdate.current = true;
       useChecklistStore.setState({ items: remote as ChecklistItem[] });
       isRemoteUpdate.current = false;
@@ -93,37 +86,19 @@ export function useFirebaseSync(): void {
     onValue(wRef, (snap) => {
       const remote = mapToArray<Omit<WishlistItem, "id">>(snap.val());
       const local = useWishlistStore.getState().items;
-
       if (JSON.stringify(remote) === JSON.stringify(local)) return;
-
       isRemoteUpdate.current = true;
       useWishlistStore.setState({ items: remote as WishlistItem[] });
       isRemoteUpdate.current = false;
     });
     unsubscribers.push(() => off(wRef));
 
-    // 4. Presets
-    const pRef = presetsRef(roomId);
-    onValue(pRef, (snap) => {
-      const remote = mapToArray<Omit<Preset, "id">>(snap.val());
-      const local = usePresetStore.getState().presets;
-
-      if (JSON.stringify(remote) === JSON.stringify(local)) return;
-
-      isRemoteUpdate.current = true;
-      usePresetStore.setState({ presets: remote as Preset[] });
-      isRemoteUpdate.current = false;
-    });
-    unsubscribers.push(() => off(pRef));
-
-    // 5. Transactions
+    // 4. Transactions
     const tRef = transactionsRef(roomId);
     onValue(tRef, (snap) => {
       const remote = mapToArray<Omit<Transaction, "id">>(snap.val());
       const local = useTransactionStore.getState().items;
-
       if (JSON.stringify(remote) === JSON.stringify(local)) return;
-
       isRemoteUpdate.current = true;
       useTransactionStore.setState({ items: remote as Transaction[] });
       isRemoteUpdate.current = false;
@@ -149,22 +124,6 @@ export function useFirebaseSync(): void {
       fbSet(wishlistRef(roomId), arrayToMap(state.items)).catch(console.error);
     });
     unsubscribers.push(unsubWishlist);
-
-    const unsubPresets = usePresetStore.subscribe((state) => {
-      if (isRemoteUpdate.current) return;
-      fbSet(
-        presetsRef(roomId),
-        arrayToMap(
-          state.presets.map((p) => ({
-            id: p.id,
-            name: p.name,
-            createdAt: p.createdAt,
-            input: p.input,
-          })),
-        ),
-      ).catch(console.error);
-    });
-    unsubscribers.push(unsubPresets);
 
     const unsubTransactions = useTransactionStore.subscribe((state) => {
       if (isRemoteUpdate.current) return;

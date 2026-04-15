@@ -6,7 +6,7 @@
 import { createHashRouter } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import HomePage from "@/pages/HomePage";
-import PresetsPage from "@/pages/PresetsPage";
+import SettingsPage from "@/pages/SettingsPage";
 import ChecklistPage from "@/pages/ChecklistPage";
 import WishlistPage from "@/pages/WishlistPage";
 import TipsPage from "@/pages/TipsPage";
@@ -18,7 +18,7 @@ export const router = createHashRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: "presets", element: <PresetsPage /> },
+      { path: "settings", element: <SettingsPage /> },
       { path: "checklist", element: <ChecklistPage /> },
       { path: "wishlist", element: <WishlistPage /> },
       { path: "tips", element: <TipsPage /> },

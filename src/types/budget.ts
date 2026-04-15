@@ -42,14 +42,6 @@ export interface MonthlyBalance {
   label: string;
 }
 
-/** 저장된 시나리오 프리셋 */
-export interface Preset {
-  id: string;
-  name: string;
-  createdAt: number;
-  input: BudgetInput;
-}
-
 /** 체크리스트 항목 */
 export interface ChecklistItem {
   id: string;

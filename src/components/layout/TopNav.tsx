@@ -9,8 +9,8 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { RoomStatusIndicator } from "@/components/room/RoomStatus";
 
 const MENU = [
-  { to: "/", label: "시뮬레이터", end: true },
-  { to: "/presets", label: "시나리오" },
+  { to: "/", label: "대시보드", end: true },
+  { to: "/settings", label: "설정" },
   { to: "/checklist", label: "체크리스트" },
   { to: "/wishlist", label: "위시리스트" },
   { to: "/tips", label: "팁" },
