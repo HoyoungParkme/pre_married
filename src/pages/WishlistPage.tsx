@@ -122,15 +122,23 @@ export default function WishlistPage() {
           <p className="text-sm text-gray-400 py-4 text-center">항목이 없습니다.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm table-fixed">
+              <colgroup>
+                <col className="w-10" />
+                <col style={{ width: "40%" }} />
+                <col className="w-16" />
+                <col className="w-20" />
+                <col style={{ width: "25%" }} />
+                <col className="w-8" />
+              </colgroup>
               <thead>
                 <tr className="text-left text-gray-400 border-b border-gray-100 dark:border-gray-800">
-                  <th className="py-2 pr-2 w-10 font-medium">구매</th>
+                  <th className="py-2 pr-2 font-medium">구매</th>
                   <th className="py-2 pr-2 font-medium">이름</th>
                   <th className="py-2 pr-2 font-medium">분류</th>
                   <th className="py-2 pr-2 font-medium">상태</th>
                   <th className="py-2 pr-2 font-medium text-right">가격</th>
-                  <th className="py-2 w-8"></th>
+                  <th className="py-2"></th>
                 </tr>
               </thead>
               <tbody>
