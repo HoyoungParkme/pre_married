@@ -1,0 +1,276 @@
+import React, { useState, useEffect } from 'react';
+import { Wallet, Home, ShoppingCart, Plane, Heart, AlertCircle, CheckCircle, ArrowRight, Calendar, TrendingUp, PiggyBank } from 'lucide-react';
+
+// 렌더링 충돌 방지를 위해 하위 컴포넌트 및 유틸리티 함수 외부 분리
+const formatNumber = (num) => {
+  if (num == null || isNaN(num)) return "0";
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};
+
+// UI 개선: 토스(Toss) 스타일의 모던한 입력 폼으로 변경
+const NumberInput = ({ label, value, onChange, unit = "원", highlight = false }) => (
+  <div className={`flex flex-col sm:flex-row justify-between items-center py-3 border-b border-slate-100 last:border-0 ${highlight ? 'bg-blue-50/50 rounded-lg px-3 -mx-3' : ''}`}>
+    <label className="text-slate-600 font-medium mb-2 sm:mb-0">{label}</label>
+    <div className="flex items-center bg-slate-50/80 rounded-lg px-3 py-2 border border-slate-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+      <input
+        type="text"
+        className="w-32 sm:w-36 text-right outline-none bg-transparent font-bold text-slate-800"
+        value={formatNumber(value)}
+        onChange={onChange}
+      />
+      <span className="ml-2 text-slate-500 text-sm font-medium">{unit}</span>
+    </div>
+  </div>
+);
+
+const App = () => {
+  // 1. 상태 관리 (초기값은 제공된 데이터 기준)
+  const [baseFunds, setBaseFunds] = useState(40000000);
+  const [extraFunds, setExtraFunds] = useState(50000000);
+  
+  const [jeonseTotal, setJeonseTotal] = useState(170000000);
+  const [lhSupportAmount, setLhSupportAmount] = useState(137750000);
+  
+  const [livingRent, setLivingRent] = useState(500000);
+  const [livingMaint, setLivingMaint] = useState(65000); 
+  const [livingUtil, setLivingUtil] = useState(140000); 
+  const [livingFood, setLivingFood] = useState(500000); 
+  
+  // 💡 저축 관련 상태 추가 (예: 입주 후 ~ 결혼 전까지 약 11개월)
+  const [monthlySavings, setMonthlySavings] = useState(1500000);
+  const [savingMonths, setSavingMonths] = useState(11);
+  
+  const [weddingItems, setWeddingItems] = useState(5000000);
+  const [honeymoon, setHoneymoon] = useState(5500000);
+  const [weddingCost, setWeddingCost] = useState(15000000);
+
+  // 2. 계산 로직
+  const totalFunds = baseFunds + extraFunds;
+  const selfPayAmount = jeonseTotal - lhSupportAmount;
+  const initialRemain = totalFunds - selfPayAmount;
+  
+  const totalLivingCost = livingRent + livingMaint + livingUtil + livingFood;
+  
+  // 저축액 계산 로직 추가
+  const totalSavings = monthlySavings * savingMonths;
+  
+  const midRemain = initialRemain - weddingItems - honeymoon;
+  
+  // 최종 잔액 = (기존 잔액) - (결혼비용) + (결혼 전까지 모은 돈)
+  const finalRemain = midRemain - weddingCost + totalSavings;
+
+  // 3. 입력 데이터 처리 함수
+  const parseNumber = (str) => {
+    const parsed = parseInt(str.replace(/,/g, ''), 10);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
+  const handleNumChange = (setter) => (e) => {
+    setter(parseNumber(e.target.value));
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-8 font-sans pb-20">
+      <div className="max-w-5xl mx-auto space-y-8">
+        
+        {/* 헤더 */}
+        <header className="bg-white rounded-3xl shadow-sm p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center border border-slate-100">
+          <div>
+            <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">신혼 준비 마스터 플랜</h1>
+            <p className="text-slate-500 mt-2 font-medium">자금 흐름 및 일정 시뮬레이터</p>
+          </div>
+          <div className="mt-4 sm:mt-0 bg-blue-50 px-4 py-2 rounded-full border border-blue-100 flex items-center">
+            <span className="w-2 h-2 rounded-full bg-blue-500 mr-2 animate-pulse"></span>
+            <span className="text-blue-700 font-semibold text-sm">실시간 시뮬레이션 동작 중</span>
+          </div>
+        </header>
+
+        {/* 대시보드 - 핵심 요약 */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center text-slate-500 mb-3">
+              <Wallet className="w-5 h-5 mr-2 text-slate-400" />
+              <span className="font-semibold text-sm">초기 총 자금</span>
+            </div>
+            <div className="text-2xl font-bold text-slate-800">{formatNumber(totalFunds)}<span className="text-base font-medium text-slate-500 ml-1">원</span></div>
+          </div>
+          
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center text-slate-500 mb-3">
+              <PiggyBank className="w-5 h-5 mr-2 text-emerald-500" />
+              <span className="font-semibold text-sm">결혼 전 예상 저축</span>
+            </div>
+            <div className="text-2xl font-bold text-emerald-600">+{formatNumber(totalSavings)}<span className="text-base font-medium text-emerald-500/70 ml-1">원</span></div>
+          </div>
+
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center text-slate-500 mb-3">
+              <Home className="w-5 h-5 mr-2 text-slate-400" />
+              <span className="font-semibold text-sm">월 고정 생활비</span>
+            </div>
+            <div className="text-2xl font-bold text-slate-800">{formatNumber(totalLivingCost)}<span className="text-base font-medium text-slate-500 ml-1">원</span></div>
+          </div>
+
+          <div className="p-6 rounded-3xl shadow-sm border border-blue-200 bg-gradient-to-br from-blue-500 to-blue-600 text-white transform hover:-translate-y-1 transition-all duration-300">
+            <div className="flex items-center text-blue-100 mb-3">
+              <TrendingUp className="w-5 h-5 mr-2" />
+              <span className="font-semibold text-sm">결혼 후 최종 잔액</span>
+            </div>
+            <div className="text-3xl font-extrabold">{formatNumber(finalRemain)}<span className="text-lg font-medium text-blue-200 ml-1">원</span></div>
+          </div>
+        </div>
+
+        {/* 자금 흐름 도식화 (저축 추가됨) */}
+        <section className="bg-white rounded-3xl shadow-sm p-8 border border-slate-100">
+          <h2 className="text-xl font-extrabold text-slate-800 mb-8 flex items-center">
+            <ArrowRight className="w-5 h-5 mr-2 text-blue-500" />
+            자금 운영 시나리오 흐름도
+          </h2>
+          
+          <div className="flex flex-col md:flex-row items-stretch justify-between space-y-4 md:space-y-0 md:space-x-4">
+            {/* 단계 1 */}
+            <div className="flex-1 bg-slate-50 rounded-2xl p-5 border border-slate-100 relative group">
+              <div className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Step 1</div>
+              <div className="text-slate-600 font-medium mb-1">초기 보유 자금</div>
+              <div className="text-xl font-bold text-slate-800">{formatNumber(totalFunds)}원</div>
+            </div>
+
+            <div className="hidden md:flex flex-col justify-center text-slate-300"><ArrowRight className="w-6 h-6" /></div>
+
+            {/* 단계 2 */}
+            <div className="flex-1 bg-slate-50 rounded-2xl p-5 border border-slate-100">
+              <div className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Step 2</div>
+              <div className="text-slate-600 font-medium mb-1">- 주거 & 혼수</div>
+              <div className="text-rose-500 font-bold mb-3">-{formatNumber(selfPayAmount + weddingItems + honeymoon)}원</div>
+              <div className="pt-3 border-t border-slate-200 text-sm font-semibold text-slate-700">
+                잔액: {formatNumber(midRemain)}원
+              </div>
+            </div>
+
+            <div className="hidden md:flex flex-col justify-center text-slate-300"><ArrowRight className="w-6 h-6" /></div>
+
+            {/* 단계 3 (저축 추가) */}
+            <div className="flex-1 bg-emerald-50/50 rounded-2xl p-5 border border-emerald-100">
+              <div className="text-xs font-bold text-emerald-500 mb-2 uppercase tracking-wider">Step 3</div>
+              <div className="text-emerald-700 font-medium mb-1">+ {savingMonths}개월 저축</div>
+              <div className="text-emerald-600 font-bold mb-3">+{formatNumber(totalSavings)}원</div>
+              <div className="pt-3 border-t border-emerald-200 text-sm font-semibold text-emerald-800">
+                잔액: {formatNumber(midRemain + totalSavings)}원
+              </div>
+            </div>
+
+            <div className="hidden md:flex flex-col justify-center text-slate-300"><ArrowRight className="w-6 h-6" /></div>
+
+            {/* 단계 4 */}
+            <div className="flex-1 bg-blue-50 rounded-2xl p-5 border border-blue-100">
+              <div className="text-xs font-bold text-blue-500 mb-2 uppercase tracking-wider">Final</div>
+              <div className="text-blue-700 font-medium mb-1">- 결혼식 비용</div>
+              <div className="text-rose-500 font-bold mb-3">-{formatNumber(weddingCost)}원</div>
+              <div className="pt-3 border-t border-blue-200 text-lg font-extrabold text-blue-700">
+                {formatNumber(finalRemain)}원
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 상세 입력 섹션 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          {/* 자금 & 주거 구조 */}
+          <section className="bg-white rounded-3xl shadow-sm p-8 border border-slate-100">
+            <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
+              <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 mr-3">1</span>
+              기존 자금 및 주거 (LH)
+            </h2>
+            <div className="space-y-1">
+              <NumberInput label="기존 보유 자금" value={baseFunds} onChange={handleNumChange(setBaseFunds)} />
+              <NumberInput label="추가 여유 자금" value={extraFunds} onChange={handleNumChange(setExtraFunds)} />
+              <div className="my-6 border-t border-dashed border-slate-200"></div>
+              <NumberInput label="총 전세금" value={jeonseTotal} onChange={handleNumChange(setJeonseTotal)} />
+              <NumberInput label="LH 지원금" value={lhSupportAmount} onChange={handleNumChange(setLhSupportAmount)} />
+            </div>
+            <div className="mt-6 bg-slate-50 p-4 rounded-xl text-right border border-slate-100">
+              <span className="text-slate-500 font-medium text-sm">실제 내 돈(본인 부담금):</span>
+              <span className="ml-2 font-bold text-slate-800 text-lg">{formatNumber(selfPayAmount)}원</span>
+            </div>
+          </section>
+
+          {/* 저축 및 생활비 구조 */}
+          <section className="bg-white rounded-3xl shadow-sm p-8 border border-slate-100">
+            <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
+              <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 mr-3">2</span>
+              월 생활비 및 추가 저축액
+            </h2>
+            <div className="space-y-1">
+              {/* 강조된 입력창 (highlight=true) */}
+              <NumberInput label="월 예상 저축액" value={monthlySavings} onChange={handleNumChange(setMonthlySavings)} highlight={true} />
+              <NumberInput label="저축 기간" value={savingMonths} onChange={handleNumChange(setSavingMonths)} unit="개월" highlight={true} />
+              
+              <div className="my-6 border-t border-dashed border-slate-200"></div>
+              
+              <NumberInput label="월세 + LH이자" value={livingRent} onChange={handleNumChange(setLivingRent)} />
+              <NumberInput label="관리비" value={livingMaint} onChange={handleNumChange(setLivingMaint)} />
+              <NumberInput label="공과금" value={livingUtil} onChange={handleNumChange(setLivingUtil)} />
+              <NumberInput label="식비" value={livingFood} onChange={handleNumChange(setLivingFood)} />
+            </div>
+          </section>
+
+          {/* 결혼 관련 비용 */}
+          <section className="bg-white rounded-3xl shadow-sm p-8 border border-slate-100 md:col-span-2">
+            <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
+              <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 mr-3">3</span>
+              혼수 및 결혼 준비 예산
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                <h3 className="font-bold text-slate-700 flex items-center mb-4">
+                  <ShoppingCart className="w-5 h-5 mr-2 text-indigo-500" /> 혼수 예산
+                </h3>
+                <NumberInput label="총 혼수 비용" value={weddingItems} onChange={handleNumChange(setWeddingItems)} />
+                <div className="mt-4 text-sm text-slate-500 space-y-2">
+                  <p><span className="font-semibold text-slate-700">새제품:</span> 세탁기, 매트리스 등</p>
+                  <p><span className="font-semibold text-slate-700">중고:</span> 냉장고, TV, 소파 등</p>
+                </div>
+              </div>
+              
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                <h3 className="font-bold text-slate-700 flex items-center mb-4">
+                  <Heart className="w-5 h-5 mr-2 text-rose-500" /> 결혼식 예산
+                </h3>
+                <NumberInput label="결혼 총 비용" value={weddingCost} onChange={handleNumChange(setWeddingCost)} />
+                <div className="mt-4 text-sm text-slate-500 space-y-2">
+                  <p><span className="font-semibold text-slate-700">스드메:</span> 250~400만</p>
+                  <p><span className="font-semibold text-slate-700">예식장/기타:</span> 800~2,500만</p>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                <h3 className="font-bold text-slate-700 flex items-center mb-4">
+                  <Plane className="w-5 h-5 mr-2 text-sky-500" /> 신혼여행
+                </h3>
+                <NumberInput label="신행 총 비용" value={honeymoon} onChange={handleNumChange(setHoneymoon)} />
+              </div>
+            </div>
+          </section>
+        </div>
+
+        {/* 결론 */}
+        <div className="bg-slate-800 text-white rounded-3xl p-8 text-center shadow-lg relative overflow-hidden">
+          {/* 배경 장식 */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 opacity-20 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500 opacity-20 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
+          
+          <CheckCircle className="w-12 h-12 mx-auto mb-4 text-emerald-400 relative z-10" />
+          <h2 className="text-2xl font-bold mb-3 relative z-10">최종 시뮬레이션 결과</h2>
+          <p className="text-slate-300 font-medium mb-6 relative z-10 text-lg">
+            "초기 자금을 방어하고, <span className="text-emerald-400 font-bold bg-emerald-900/50 px-2 py-1 rounded">{savingMonths}개월 간 {formatNumber(totalSavings)}원을 추가 저축</span>하여<br/>
+            결혼식 후에도 <span className="text-blue-400 font-bold bg-blue-900/50 px-2 py-1 rounded">{formatNumber(finalRemain)}원</span>의 여유 자금을 확보합니다."
+          </p>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+export default App;

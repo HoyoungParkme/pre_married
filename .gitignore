@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+Thumbs.db
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Test
+coverage/
+
+# Claude Code 로컬 설정 (공유 대상 아님)
+.claude/
+.claude-plugin/
