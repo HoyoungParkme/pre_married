@@ -27,8 +27,8 @@ export function TopNav() {
           <span className="hidden sm:block tracking-tight">신혼 마스터 플랜</span>
         </NavLink>
 
-        <nav className="flex-1 overflow-x-auto">
-          <ul className="flex items-center gap-1 sm:gap-2 justify-center sm:justify-start">
+        <nav className="flex-1">
+          <ul className="flex items-center gap-1 sm:gap-2 justify-center sm:justify-start flex-wrap">
             {MENU.map((m) => (
               <li key={m.to}>
                 <NavLink

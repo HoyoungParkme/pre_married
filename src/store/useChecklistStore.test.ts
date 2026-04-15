@@ -48,23 +48,23 @@ describe("toggle", () => {
 describe("add", () => {
   it("새 항목을 추가하면 items 길이가 1 증가한다", () => {
     const before = useChecklistStore.getState().items.length;
-    useChecklistStore.getState().add("D-30", "새 할 일");
+    useChecklistStore.getState().add("2026-06-01", "새 할 일");
     const after = useChecklistStore.getState().items.length;
     expect(after).toBe(before + 1);
   });
 
-  it("추가된 항목의 text, stage, done이 올바르다", () => {
-    useChecklistStore.getState().add("D-7", "마지막 점검");
+  it("추가된 항목의 text, date, done이 올바르다", () => {
+    useChecklistStore.getState().add("2026-11-24", "마지막 점검");
     const items = useChecklistStore.getState().items;
     const added = items[items.length - 1];
     expect(added.text).toBe("마지막 점검");
-    expect(added.stage).toBe("D-7");
+    expect(added.date).toBe("2026-11-24");
     expect(added.done).toBe(false);
   });
 
   it("추가된 항목에 고유 id가 부여된다", () => {
-    useChecklistStore.getState().add("D-90", "A 항목");
-    useChecklistStore.getState().add("D-90", "B 항목");
+    useChecklistStore.getState().add("2026-08-15", "A 항목");
+    useChecklistStore.getState().add("2026-08-15", "B 항목");
     const items = useChecklistStore.getState().items;
     const ids = items.map((i) => i.id);
     const uniqueIds = new Set(ids);
@@ -97,7 +97,7 @@ describe("remove", () => {
 
 describe("resetToDefault", () => {
   it("항목을 추가하고 삭제한 뒤 resetToDefault하면 DEFAULT_CHECKLIST로 복원된다", () => {
-    useChecklistStore.getState().add("D-30", "임시 항목");
+    useChecklistStore.getState().add("2026-06-01", "임시 항목");
     useChecklistStore.getState().remove(DEFAULT_CHECKLIST[0].id);
     useChecklistStore.getState().resetToDefault();
     const { items } = useChecklistStore.getState();

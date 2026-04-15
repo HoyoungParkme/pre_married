@@ -45,7 +45,8 @@ export interface MonthlyBalance {
 /** 체크리스트 항목 */
 export interface ChecklistItem {
   id: string;
-  stage: "D-180" | "D-90" | "D-30" | "D-7";
+  /** 날짜 (YYYY-MM-DD 형식) */
+  date: string;
   text: string;
   done: boolean;
 }

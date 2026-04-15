@@ -24,20 +24,31 @@ export const DEFAULT_TRANSACTIONS: Transaction[] = [
   { id: "t4", date: "2026-11", label: "결혼식", amount: -15_000_000, category: "결혼" },
 ];
 
-/** 결혼 준비 체크리스트 초기 시드 */
+/** 오늘 기준 N일 뒤 날짜 (YYYY-MM-DD) */
+function daysFromNow(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/** 결혼 준비 체크리스트 초기 시드 (오늘 기준 날짜 자동 계산) */
 export const DEFAULT_CHECKLIST: ChecklistItem[] = [
-  { id: "c1", stage: "D-180", text: "예식장 후보 3곳 방문 및 견적 요청", done: false },
-  { id: "c2", stage: "D-180", text: "상견례 일정 잡기", done: false },
-  { id: "c3", stage: "D-180", text: "전세 대출(LH 등) 사전 심사 신청", done: false },
-  { id: "c4", stage: "D-90", text: "스드메 계약 (스튜디오/드레스/메이크업)", done: false },
-  { id: "c5", stage: "D-90", text: "신혼여행 항공·숙소 예약", done: false },
-  { id: "c6", stage: "D-90", text: "혼수 가전·가구 리스트 확정", done: false },
-  { id: "c7", stage: "D-30", text: "청첩장 발송", done: false },
-  { id: "c8", stage: "D-30", text: "예단·예물 결정", done: false },
-  { id: "c9", stage: "D-30", text: "신혼집 입주 청소 예약", done: false },
-  { id: "c10", stage: "D-7", text: "본식 리허설 & 최종 하객 확인", done: false },
-  { id: "c11", stage: "D-7", text: "신혼여행 짐 싸기 & 환전", done: false },
-  { id: "c12", stage: "D-7", text: "혼인신고서 작성 준비", done: false },
+  // 지금 당장 (D-180 → 0~14일)
+  { id: "c1", date: daysFromNow(0), text: "예식장 후보 3곳 방문 및 견적 요청", done: false },
+  { id: "c2", date: daysFromNow(7), text: "상견례 일정 잡기", done: false },
+  { id: "c3", date: daysFromNow(14), text: "전세 대출(LH 등) 사전 심사 신청", done: false },
+  // 3개월 뒤 (D-90)
+  { id: "c4", date: daysFromNow(90), text: "스드메 계약 (스튜디오/드레스/메이크업)", done: false },
+  { id: "c5", date: daysFromNow(97), text: "신혼여행 항공·숙소 예약", done: false },
+  { id: "c6", date: daysFromNow(104), text: "혼수 가전·가구 리스트 확정", done: false },
+  // 5개월 뒤 (D-30)
+  { id: "c7", date: daysFromNow(150), text: "청첩장 발송", done: false },
+  { id: "c8", date: daysFromNow(157), text: "예단·예물 결정", done: false },
+  { id: "c9", date: daysFromNow(164), text: "신혼집 입주 청소 예약", done: false },
+  // 6개월 뒤 (D-7)
+  { id: "c10", date: daysFromNow(173), text: "본식 리허설 & 최종 하객 확인", done: false },
+  { id: "c11", date: daysFromNow(176), text: "신혼여행 짐 싸기 & 환전", done: false },
+  { id: "c12", date: daysFromNow(179), text: "혼인신고서 작성 준비", done: false },
 ];
 
 /** 절약 팁 정적 콘텐츠 */

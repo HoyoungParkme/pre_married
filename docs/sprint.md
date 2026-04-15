@@ -1,15 +1,15 @@
 # 스프린트 상태
 
-## 현재: Sprint 9 — 시뮬레이터 간소화 + 날짜 기반 대시보드
+## 현재: Sprint 11 — 체크리스트 달력 전환 + 상단바 스크롤 제거
 
 ### 목표
-시뮬레이터 입력을 간소화하고 날짜 기반 지출/수입 대시보드로 전환
+체크리스트를 달력 UI로 전환, 상단바 모바일 스크롤 제거
 
 ### 완료 기준
-- [ ] 자금 3개(적금, 추가, 월저축) + 고정비 4개로 입력 간소화
-- [ ] 일회성 지출/수입을 날짜와 함께 등록
-- [ ] 월별 잔액 추이 차트 + 거래 타임라인
-- [ ] Firebase 동기화 유지
+- [ ] ChecklistItem.stage → date로 변경
+- [ ] 달력 그리드 UI + 날짜 클릭 시 항목 표시/추가
+- [ ] 진행률 바 제거
+- [ ] TopNav 가로 스크롤 제거
 
 ### 단계
 - [x] 분석
@@ -18,12 +18,10 @@
 - [ ] 검증
 
 ### 작업
-1. [ ] 타입 변경 (BudgetInput 축소, Transaction 추가)
-2. [ ] 스토어 변경 (useBudgetStore, useTransactionStore)
-3. [ ] 계산 로직 재작성 (타임라인 기반)
-4. [ ] 대시보드 UI (BalanceSummary, TimelineChart, TransactionList)
-5. [ ] 입력 UI (FundsSection, MonthlyExpenseSection)
-6. [ ] Firebase 동기화 업데이트
+1. [ ] ChecklistItem 타입 변경 (stage→date)
+2. [ ] 기본 체크리스트 날짜 기반으로 변환
+3. [ ] ChecklistPage 달력 UI 재작성
+4. [ ] TopNav 스크롤 제거
 
 ## 히스토리
 
