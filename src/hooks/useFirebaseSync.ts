@@ -23,8 +23,9 @@ import { useBudgetStore } from "@/store/useBudgetStore";
 import { useChecklistStore } from "@/store/useChecklistStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { usePresetStore } from "@/store/usePresetStore";
-import { useRoomStore } from "@/store/useRoomStore";
+import { useRoomStore, SHARED_ROOM_ID } from "@/store/useRoomStore";
 import { arrayToMap, mapToArray } from "@/firebase/sync";
+import { isFirebaseConfigured } from "@/firebase/config";
 import type {
   BudgetInput,
   ChecklistItem,
@@ -34,18 +35,16 @@ import type {
 
 /**
  * AppLayout에서 한 번만 호출하여 Firebase 동기화를 시작한다.
- * roomId가 없으면 아무 동작도 하지 않는다.
+ * Firebase 설정이 없으면 아무 동작도 하지 않는다 (localStorage만 사용).
  */
 export function useFirebaseSync(): void {
-  const roomId = useRoomStore((s) => s.roomId);
   const setStatus = useRoomStore((s) => s.setStatus);
-
-  // 원격 업데이트 중인지 추적 (무한 루프 방지)
   const isRemoteUpdate = useRef(false);
 
   useEffect(() => {
-    if (!roomId) return;
+    if (!isFirebaseConfigured()) return;
 
+    const roomId = SHARED_ROOM_ID;
     const unsubscribers: (() => void)[] = [];
 
     // --- Firebase 연결 상태 감시 ---
@@ -64,7 +63,6 @@ export function useFirebaseSync(): void {
       const remote: BudgetInput = snap.val();
       const local = useBudgetStore.getState().input;
 
-      // 데이터가 같으면 무시
       if (JSON.stringify(remote) === JSON.stringify(local)) return;
 
       isRemoteUpdate.current = true;
@@ -117,28 +115,24 @@ export function useFirebaseSync(): void {
 
     // --- Zustand → Firebase 구독 ---
 
-    // 1. Budget
     const unsubBudget = useBudgetStore.subscribe((state) => {
       if (isRemoteUpdate.current) return;
       fbSet(budgetRef(roomId), state.input).catch(console.error);
     });
     unsubscribers.push(unsubBudget);
 
-    // 2. Checklist
     const unsubChecklist = useChecklistStore.subscribe((state) => {
       if (isRemoteUpdate.current) return;
       fbSet(checklistRef(roomId), arrayToMap(state.items)).catch(console.error);
     });
     unsubscribers.push(unsubChecklist);
 
-    // 3. Wishlist
     const unsubWishlist = useWishlistStore.subscribe((state) => {
       if (isRemoteUpdate.current) return;
       fbSet(wishlistRef(roomId), arrayToMap(state.items)).catch(console.error);
     });
     unsubscribers.push(unsubWishlist);
 
-    // 4. Presets
     const unsubPresets = usePresetStore.subscribe((state) => {
       if (isRemoteUpdate.current) return;
       fbSet(
@@ -158,5 +152,5 @@ export function useFirebaseSync(): void {
     return () => {
       unsubscribers.forEach((fn) => fn());
     };
-  }, [roomId, setStatus]);
+  }, [setStatus]);
 }
