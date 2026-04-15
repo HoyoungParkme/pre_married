@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { useWishlistStore } from "@/store/useWishlistStore";
-import { useTransactionStore } from "@/store/useTransactionStore";
+import { useBudgetStore } from "@/store/useBudgetStore";
 import { formatNumber, parseNumber } from "@/utils/format";
 import type { WishlistItem } from "@/types/budget";
 
@@ -21,10 +21,8 @@ export default function WishlistPage() {
   const remove = useWishlistStore((s) => s.remove);
   const togglePurchased = useWishlistStore((s) => s.togglePurchased);
 
-  const transactions = useTransactionStore((s) => s.items);
-  const weddingItemsBudget = Math.abs(
-    transactions.filter((t) => t.category === "혼수").reduce((sum, t) => sum + t.amount, 0),
-  );
+  const budgetInput = useBudgetStore((s) => s.input);
+  const weddingItemsBudget = budgetInput.savingsAccount + budgetInput.extraFunds;
 
   const [tab, setTab] = useState<PriorityTab>("all");
   const [categoryFilter, setCategoryFilter] = useState<WishlistItem["category"] | "all">("all");
